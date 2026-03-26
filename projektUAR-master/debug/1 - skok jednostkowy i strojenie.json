@@ -1,0 +1,15 @@
+{
+    "arx_a": "-0.8",
+    "arx_b": "0.2",
+    "arx_k": 1,
+    "gen_amplituda": 1,
+    "gen_okres": 100,
+    "gen_stala": 0,
+    "gen_tryb": 0,
+    "gen_wypelnienie": 1,
+    "pid_k": 0.5,
+    "pid_td": 0,
+    "pid_ti": 5,
+    "pid_tryb": 0,
+    "sys_interval": 100
+}
