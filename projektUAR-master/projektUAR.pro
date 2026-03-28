@@ -11,14 +11,16 @@ SOURCES += main.cpp \
            mainwindow.cpp \
            UAR.cpp \
            qcustomplot.cpp \
-           dialogarx.cpp
+           dialogarx.cpp \
+           serwertcp.cpp
 
 HEADERS  += mainwindow.h \
             UAR.h \
             UARService.h \
             dialogarx.h \
             qcustomplot.h \
-            dialogarx.h
+            dialogarx.h \
+            serwertcp.h
 
 FORMS    += mainwindow.ui \
     dialogarx.ui
