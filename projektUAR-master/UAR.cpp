@@ -1,6 +1,7 @@
 #include "UAR.h"
 #include <cmath>
 #include <algorithm>
+#include <iostream>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -91,6 +92,52 @@ double ModelARX::symuluj(double u_raw) {
 
     return y_temp;
 }
+std::vector<std::byte> ModelARX::serializuj()const{
+    const size_t RZ_A = m_A.size() * sizeof(double);
+    const size_t RZ_B = m_B.size() * sizeof(double);
+    const size_t LEN_A = m_A.size();
+    const size_t LEN_B = m_B.size();
+    const size_t RZ_PROSTE = sizeof(m_k) + sizeof(m_szum) + sizeof(m_minU)*4 + sizeof(m_ogranicz_u)*2;
+    std::vector<std::byte> buf(sizeof(size_t)*2 + RZ_A + RZ_B + RZ_PROSTE);
+    std::byte* ptr = buf.data();
+    memcpy(ptr,&LEN_A, sizeof(size_t));
+    memcpy(ptr += sizeof(size_t), m_A.data(), RZ_A);
+    memcpy(ptr += RZ_A, &LEN_B, sizeof(size_t));
+    memcpy(ptr+= sizeof(size_t), m_B.data(), RZ_B);
+    ptr += RZ_B;
+    memcpy(ptr, &m_k, sizeof(m_k));
+    memcpy(ptr += sizeof(m_k), &m_szum, sizeof(m_szum));
+    memcpy(ptr += sizeof(m_szum), &m_ogranicz_u, sizeof(m_ogranicz_u));
+    memcpy(ptr += sizeof(m_ogranicz_u), &m_ogranicz_y, sizeof(m_ogranicz_y));
+    memcpy(ptr += sizeof(m_ogranicz_y), &m_minU, sizeof(m_minU));
+    memcpy(ptr += sizeof(m_minU), &m_maxU, sizeof(m_maxU));
+    memcpy(ptr += sizeof(m_maxU), &m_minY, sizeof(m_minY));
+    memcpy(ptr += sizeof(m_minY), &m_maxY, sizeof(m_maxY));
+
+    return buf;
+
+}
+void ModelARX::deserializuj(const std::vector<std::byte>& buf){
+    const std::byte* ptr = buf.data();
+    size_t LEN_A = 0, LEN_B = 0;
+    memcpy(&LEN_A, ptr, sizeof(size_t));
+    m_A.resize(LEN_A);
+    size_t RZ_A = LEN_A * sizeof(double);
+    memcpy(m_A.data(), ptr+= sizeof(size_t), RZ_A);
+    memcpy(&LEN_B, ptr += RZ_A, sizeof(size_t));
+    m_B.resize(LEN_B);
+    size_t RZ_B = LEN_B * sizeof(double);
+    memcpy(m_B.data(), ptr+= sizeof(size_t), RZ_B);
+    ptr += RZ_B;
+    memcpy(&m_k, ptr, sizeof(m_k));
+    memcpy(&m_szum, ptr += sizeof(m_k), sizeof(m_szum));
+    memcpy(&m_ogranicz_u, ptr += sizeof(m_szum), sizeof(m_ogranicz_u));
+    memcpy(&m_ogranicz_y, ptr += sizeof(m_ogranicz_u), sizeof(m_ogranicz_y));
+    memcpy(&m_minU, ptr += sizeof(m_ogranicz_y), sizeof(m_minU));
+    memcpy(&m_maxU, ptr += sizeof(m_minU), sizeof(m_maxU));
+    memcpy(&m_minY, ptr += sizeof(m_maxU), sizeof(m_minY));
+    memcpy(&m_maxY, ptr += sizeof(m_minY), sizeof(m_maxY));
+}
 
 void ModelARX::reset() {
     std::fill(m_historia_u.begin(), m_historia_u.end(), 0.0);
@@ -117,7 +164,7 @@ void RegulatorPID::setNastawy(double k, double Ti, double Td, LiczCalk tryb) {
 
     m_liczCalk = tryb;
 }
-RegulatorPID::serializuj() const{
+std::vector<std::byte> RegulatorPID::serializuj() const{
     constexpr size_t S_K = sizeof(m_k);
     constexpr size_t S_TI = sizeof(m_Ti);
     constexpr size_t S_TD = sizeof(m_Td);
@@ -131,7 +178,7 @@ RegulatorPID::serializuj() const{
     memcpy(ptr+=S_TD, &m_liczCalk, S_LC);
     return buf;
 }
-RegulatorPID::deserializuj() const{
+void RegulatorPID::deserializuj(const std::vector<std::byte>& buf){
     const std::byte* ptr = buf.data();
     constexpr size_t S_K = sizeof(m_k);
     constexpr size_t S_TI = sizeof(m_Ti);
@@ -141,37 +188,7 @@ RegulatorPID::deserializuj() const{
     memcpy(&m_Td, ptr += S_TI, S_TD);
     memcpy(&m_liczCalk, ptr += S_TD, sizeof(m_liczCalk));
 }
-void testSerializacjiPID() {
-    std::cout << "--- TEST SERIALIZACJI PID ---" << std::endl;
 
-    // 1. Tworzymy obiekt NADAWCY i ustawiamy mu jakieś nietypowe, unikalne wartości
-    RegulatorPID pid_nadawca;
-    // Użyj swojej metody do ustawiania parametrów (podaję przykładowe)
-    pid_nadawca.setNastawy(3.14, 0.5, 12.0, LiczCalk::Wew);
-
-    // 2. Wykonujemy serializację do bufora
-    std::vector<std::byte> bufor = pid_nadawca.serializuj();
-    std::cout << "Rozmiar bufora: " << bufor.size() << " bajtow." << std::endl;
-
-    // 3. Tworzymy czysty, nowy obiekt ODBIORCY (ma domyślne parametry)
-    RegulatorPID pid_odbiorca;
-
-    // 4. Deserializujemy dane z bufora do nowego obiektu
-    pid_odbiorca.deserializuj(bufor);
-
-    // 5. Weryfikacja!
-    // Sprawdzamy, czy odbiorca ma DOKŁADNIE takie same nastawy jak nadawca.
-    // Najszybciej wypisać je w konsoli (użyj getterów lub zrób z tej funkcji friend).
-
-    // UWAGA: Jeśli nie masz getterów do parametrów konfiguracyjnych,
-    // dodaj na chwilę publiczną funkcję wypiszKonfiguracje() w klasie RegulatorPID.
-
-    std::cout << "Jesli ponizsze wartosci sa identyczne, to dziala!" << std::endl;
-    std::cout << "NADAWCA: ";
-    // pid_nadawca.wypiszKonfiguracje();
-    std::cout << "ODBIORCA: ";
-    // pid_odbiorca.wypiszKonfiguracje();
-}
 
 double RegulatorPID::symuluj(double e) {
     // Proporcjonalna

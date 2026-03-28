@@ -1,4 +1,5 @@
 QT       += core gui widgets
+QT += core network
 greaterThan(QT_MAJOR_VERSION, 4): QT += printsupport
 
 TARGET = UARSimulator
