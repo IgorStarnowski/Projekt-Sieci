@@ -39,7 +39,11 @@ int main(int argc, char *argv[])
     }
     else if (wybor == 2) {
         klient = new klientTCP();
-        klient->conToServ("127.0.0.1", 12345);
+        std::string ip_str;
+        std::cout << "Podaj ip serwera: ";
+        std::cin >> ip_str;
+        QString ip = QString::fromStdString(ip_str);
+        klient->conToServ(ip, 12345);
         std::thread watekMenu([klient, &a]() {
             char akcja;
             while (true) {
