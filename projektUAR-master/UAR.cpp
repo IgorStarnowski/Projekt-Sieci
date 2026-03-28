@@ -92,51 +92,44 @@ double ModelARX::symuluj(double u_raw) {
 
     return y_temp;
 }
-std::vector<std::byte> ModelARX::serializuj()const{
-    const size_t RZ_A = m_A.size() * sizeof(double);
-    const size_t RZ_B = m_B.size() * sizeof(double);
-    const size_t LEN_A = m_A.size();
-    const size_t LEN_B = m_B.size();
-    const size_t RZ_PROSTE = sizeof(m_k) + sizeof(m_szum) + sizeof(m_minU)*4 + sizeof(m_ogranicz_u)*2;
-    std::vector<std::byte> buf(sizeof(size_t)*2 + RZ_A + RZ_B + RZ_PROSTE);
-    std::byte* ptr = buf.data();
-    memcpy(ptr,&LEN_A, sizeof(size_t));
-    memcpy(ptr += sizeof(size_t), m_A.data(), RZ_A);
-    memcpy(ptr += RZ_A, &LEN_B, sizeof(size_t));
-    memcpy(ptr+= sizeof(size_t), m_B.data(), RZ_B);
-    ptr += RZ_B;
-    memcpy(ptr, &m_k, sizeof(m_k));
-    memcpy(ptr += sizeof(m_k), &m_szum, sizeof(m_szum));
-    memcpy(ptr += sizeof(m_szum), &m_ogranicz_u, sizeof(m_ogranicz_u));
-    memcpy(ptr += sizeof(m_ogranicz_u), &m_ogranicz_y, sizeof(m_ogranicz_y));
-    memcpy(ptr += sizeof(m_ogranicz_y), &m_minU, sizeof(m_minU));
-    memcpy(ptr += sizeof(m_minU), &m_maxU, sizeof(m_maxU));
-    memcpy(ptr += sizeof(m_maxU), &m_minY, sizeof(m_minY));
-    memcpy(ptr += sizeof(m_minY), &m_maxY, sizeof(m_maxY));
+QDataStream &operator<<(QDataStream &out, const ModelARX &v) {
+    out << (quint64)v.m_A.size();
+    for(double d : v.m_A) out << d;
+    out << (quint64)v.m_B.size();
+    for(double d : v.m_B) out << d;
+    out << (quint32)v.m_k << (double)v.m_szum;
+    out << (bool)v.m_ogranicz_u << (bool)v.m_ogranicz_y;
+    out << (double)v.m_minU << (double)v.m_maxU << (double)v.m_minY << (double)v.m_maxY;
 
-    return buf;
-
+    return out;
 }
-void ModelARX::deserializuj(const std::vector<std::byte>& buf){
-    const std::byte* ptr = buf.data();
-    size_t LEN_A = 0, LEN_B = 0;
-    memcpy(&LEN_A, ptr, sizeof(size_t));
-    m_A.resize(LEN_A);
-    size_t RZ_A = LEN_A * sizeof(double);
-    memcpy(m_A.data(), ptr+= sizeof(size_t), RZ_A);
-    memcpy(&LEN_B, ptr += RZ_A, sizeof(size_t));
-    m_B.resize(LEN_B);
-    size_t RZ_B = LEN_B * sizeof(double);
-    memcpy(m_B.data(), ptr+= sizeof(size_t), RZ_B);
-    ptr += RZ_B;
-    memcpy(&m_k, ptr, sizeof(m_k));
-    memcpy(&m_szum, ptr += sizeof(m_k), sizeof(m_szum));
-    memcpy(&m_ogranicz_u, ptr += sizeof(m_szum), sizeof(m_ogranicz_u));
-    memcpy(&m_ogranicz_y, ptr += sizeof(m_ogranicz_u), sizeof(m_ogranicz_y));
-    memcpy(&m_minU, ptr += sizeof(m_ogranicz_y), sizeof(m_minU));
-    memcpy(&m_maxU, ptr += sizeof(m_minU), sizeof(m_maxU));
-    memcpy(&m_minY, ptr += sizeof(m_maxU), sizeof(m_minY));
-    memcpy(&m_maxY, ptr += sizeof(m_minY), sizeof(m_maxY));
+
+QDataStream &operator>>(QDataStream &in, ModelARX &v) {
+    quint64 sizeA, sizeB;
+    quint32 k;
+    in >> sizeA;
+    v.m_A.resize(sizeA);
+    for(double &d : v.m_A) in >> d;
+    in >> sizeB;
+    v.m_B.resize(sizeB);
+    for(double &d : v.m_B) in >> d;
+    in >> k >> v.m_szum >> v.m_ogranicz_u >> v.m_ogranicz_y;
+    in >> v.m_minU >> v.m_maxU >> v.m_minY >> v.m_maxY;
+    v.m_k = k;
+
+    return in;
+}
+void ModelARX::wypiszKonf() const {
+    std::cout << "[ARX] k: " << m_k << ", Szum: " << m_szum << "\n";
+
+    std::cout << "  Wsp. A: ";
+    for(double val : m_A) std::cout << val << " "; // Wypisanie elementów wektora A [cite: 431]
+
+    std::cout << "\n  Wsp. B: ";
+    for(double val : m_B) std::cout << val << " "; // Wypisanie elementów wektora B [cite: 431]
+
+    std::cout << "\n  Limity U: [" << m_minU << ", " << m_maxU << "] (" << (m_ogranicz_u ? "ON" : "OFF") << ")";
+    std::cout << "\n  Limity Y: [" << m_minY << ", " << m_maxY << "] (" << (m_ogranicz_y ? "ON" : "OFF") << ")" << std::endl;
 }
 
 void ModelARX::reset() {
@@ -164,31 +157,22 @@ void RegulatorPID::setNastawy(double k, double Ti, double Td, LiczCalk tryb) {
 
     m_liczCalk = tryb;
 }
-std::vector<std::byte> RegulatorPID::serializuj() const{
-    constexpr size_t S_K = sizeof(m_k);
-    constexpr size_t S_TI = sizeof(m_Ti);
-    constexpr size_t S_TD = sizeof(m_Td);
-    constexpr size_t S_LC = sizeof(m_liczCalk);
-
-    std::vector<std::byte> buf(S_K+S_TI+S_TD+S_LC);
-    std::byte* ptr = buf.data();
-    memcpy(ptr, &m_k, S_K);
-    memcpy(ptr+=S_K, &m_Ti, S_TI);
-    memcpy(ptr+=S_TI, &m_Td, S_TD);
-    memcpy(ptr+=S_TD, &m_liczCalk, S_LC);
-    return buf;
+QDataStream &operator<<(QDataStream &out, const RegulatorPID &v) {
+    out << (double)v.m_k << (double)v.m_Ti << (double)v.m_Td << (qint32)v.m_liczCalk;
+    return out;
 }
-void RegulatorPID::deserializuj(const std::vector<std::byte>& buf){
-    const std::byte* ptr = buf.data();
-    constexpr size_t S_K = sizeof(m_k);
-    constexpr size_t S_TI = sizeof(m_Ti);
-    constexpr size_t S_TD = sizeof(m_Td);
-    memcpy(&m_k, ptr, S_K);
-    memcpy(&m_Ti, ptr += S_K, S_TI);
-    memcpy(&m_Td, ptr += S_TI, S_TD);
-    memcpy(&m_liczCalk, ptr += S_TD, sizeof(m_liczCalk));
+QDataStream &operator>>(QDataStream &in, RegulatorPID &v) {
+    qint32 tryb;
+    in >> v.m_k >> v.m_Ti >> v.m_Td >> tryb;
+    v.m_liczCalk = (LiczCalk)tryb;
+    return in;
 }
-
+void RegulatorPID::wypiszKonf() const {
+    std::cout << "[PID] k: " << m_k
+              << ", Ti: " << m_Ti
+              << ", Td: " << m_Td
+              << ", TrybCalk: " << (int)m_liczCalk << std::endl; // Wypisanie nastaw
+}
 
 double RegulatorPID::symuluj(double e) {
     // Proporcjonalna

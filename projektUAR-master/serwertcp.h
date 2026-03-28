@@ -18,6 +18,8 @@ private slots:
     void onNewCon();
     void onRedyRead();
     void onDisc();
+    void sendConf(int pakietID, const RegulatorPID &pid);
+    void sendConf(int pakietID, const ModelARX &arx);
 private:
     QTcpServer m_server;
     QTcpSocket* m_clientSocket = nullptr;
