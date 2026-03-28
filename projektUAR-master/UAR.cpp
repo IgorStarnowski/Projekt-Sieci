@@ -109,15 +109,69 @@ void RegulatorPID::setNastawy(double k, double Ti, double Td, LiczCalk tryb) {
     if (tryb != m_liczCalk)
     {
         if (tryb == LiczCalk::Wew)
-            m_suma_e = m_suma_e * m_Ti * 1.0;
-        else
             m_suma_e = m_suma_e / m_Ti * 1.0;
+        else
+            m_suma_e = m_suma_e * m_Ti * 1.0;
     }
 
 
     m_liczCalk = tryb;
 }
+RegulatorPID::serializuj() const{
+    constexpr size_t S_K = sizeof(m_k);
+    constexpr size_t S_TI = sizeof(m_Ti);
+    constexpr size_t S_TD = sizeof(m_Td);
+    constexpr size_t S_LC = sizeof(m_liczCalk);
 
+    std::vector<std::byte> buf(S_K+S_TI+S_TD+S_LC);
+    std::byte* ptr = buf.data();
+    memcpy(ptr, &m_k, S_K);
+    memcpy(ptr+=S_K, &m_Ti, S_TI);
+    memcpy(ptr+=S_TI, &m_Td, S_TD);
+    memcpy(ptr+=S_TD, &m_liczCalk, S_LC);
+    return buf;
+}
+RegulatorPID::deserializuj() const{
+    const std::byte* ptr = buf.data();
+    constexpr size_t S_K = sizeof(m_k);
+    constexpr size_t S_TI = sizeof(m_Ti);
+    constexpr size_t S_TD = sizeof(m_Td);
+    memcpy(&m_k, ptr, S_K);
+    memcpy(&m_Ti, ptr += S_K, S_TI);
+    memcpy(&m_Td, ptr += S_TI, S_TD);
+    memcpy(&m_liczCalk, ptr += S_TD, sizeof(m_liczCalk));
+}
+void testSerializacjiPID() {
+    std::cout << "--- TEST SERIALIZACJI PID ---" << std::endl;
+
+    // 1. Tworzymy obiekt NADAWCY i ustawiamy mu jakieś nietypowe, unikalne wartości
+    RegulatorPID pid_nadawca;
+    // Użyj swojej metody do ustawiania parametrów (podaję przykładowe)
+    pid_nadawca.setNastawy(3.14, 0.5, 12.0, LiczCalk::Wew);
+
+    // 2. Wykonujemy serializację do bufora
+    std::vector<std::byte> bufor = pid_nadawca.serializuj();
+    std::cout << "Rozmiar bufora: " << bufor.size() << " bajtow." << std::endl;
+
+    // 3. Tworzymy czysty, nowy obiekt ODBIORCY (ma domyślne parametry)
+    RegulatorPID pid_odbiorca;
+
+    // 4. Deserializujemy dane z bufora do nowego obiektu
+    pid_odbiorca.deserializuj(bufor);
+
+    // 5. Weryfikacja!
+    // Sprawdzamy, czy odbiorca ma DOKŁADNIE takie same nastawy jak nadawca.
+    // Najszybciej wypisać je w konsoli (użyj getterów lub zrób z tej funkcji friend).
+
+    // UWAGA: Jeśli nie masz getterów do parametrów konfiguracyjnych,
+    // dodaj na chwilę publiczną funkcję wypiszKonfiguracje() w klasie RegulatorPID.
+
+    std::cout << "Jesli ponizsze wartosci sa identyczne, to dziala!" << std::endl;
+    std::cout << "NADAWCA: ";
+    // pid_nadawca.wypiszKonfiguracje();
+    std::cout << "ODBIORCA: ";
+    // pid_odbiorca.wypiszKonfiguracje();
+}
 
 double RegulatorPID::symuluj(double e) {
     // Proporcjonalna

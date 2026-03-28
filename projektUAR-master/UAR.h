@@ -42,7 +42,8 @@ public:
     void setParams(const std::vector<double>& wsp_a, const std::vector<double>& wsp_b, unsigned int opoznienie_k);
     void setLimity(double minU, double maxU, double minY, double maxY, bool wlaczone);
     void setSzum(double std_dev);
-
+    void serializuj();
+    void deserializuj();
     // Główna funkcja
     double symuluj(double sterowanie);
     void reset();
@@ -73,6 +74,8 @@ public:
     double symuluj(double uchyb);
     void reset();
     void resetMemory();
+    void serializuj();
+    void deserializuj();
 
     // Gettery do wykresów
     double getUP() const { return m_u_P; }
