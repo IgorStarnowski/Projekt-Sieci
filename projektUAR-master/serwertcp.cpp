@@ -1,4 +1,5 @@
 #include "serwertcp.h"
+#include "QMessageBox"
 
 SerwerTCP::SerwerTCP(QObject *parent) : QObject(parent), m_server(this)
 {
@@ -6,10 +7,10 @@ SerwerTCP::SerwerTCP(QObject *parent) : QObject(parent), m_server(this)
 }
 void SerwerTCP::startListening(int port){
     if(m_server.listen(QHostAddress::Any, port)){
-        std::cout << "Serwer na porcie: " << port << std::endl;
-    } else {
-        std::cout << "Blad startu" << std::endl;
-    }
+            QMessageBox::information(nullptr, "Sukces", "Serwer NASŁUCHUJE na porcie: " + QString::number(port));
+        } else {
+            QMessageBox::critical(nullptr, "Błąd Serwera", "Nie udało się otworzyć portu!\nPowód: " + m_server.errorString());
+        }
 }
 void SerwerTCP::onNewCon(){
     m_clientSocket = m_server.nextPendingConnection();

@@ -446,20 +446,23 @@ void MainWindow::on_btnSiec_clicked()
 
 void MainWindow::on_btnRozlacz_clicked()
 {
-    if (klient != nullptr){
-        klient->rozlacz();
-        klient->deleteLater();
-        klient = nullptr;
-        qDebug() << "Zabito klienta";
-    }
-    if (serwer != nullptr){
-        serwer->zatrzymaj();
-        serwer->deleteLater();
-        serwer = nullptr;
-        qDebug() << "Zabito serwer";
-    }
+    QMessageBox::StandardButton odpowiedz;
+    odpowiedz = QMessageBox::warning(this,"Ostrzeżenie", "Czy na pewno chcesz rozłączyć?", QMessageBox::Yes | QMessageBox::No);
+    if(odpowiedz == QMessageBox::Yes){
+        if (klient != nullptr){
+            klient->rozlacz();
+            klient->deleteLater();
+            klient = nullptr;
+            qDebug() << "Zabito klienta";
+        }
+        if (serwer != nullptr){
+            serwer->zatrzymaj();
+            serwer->deleteLater();
+            serwer = nullptr;
+            qDebug() << "Zabito serwer";
+        }
     ui->statusLabel->setText("STATUS: TRYB LOKALNY");
     ui->statusLabel->setStyleSheet("background-color: #007bff; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
-
+    }
 }
 

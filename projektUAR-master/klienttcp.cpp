@@ -9,7 +9,7 @@ klientTCP::klientTCP(QObject *parent) : QObject(parent)
     connect(&m_socket, SIGNAL(disconnected()), this, SLOT(onDisc()));
 }
 void klientTCP::conToServ(const QString& ip, int port){
-    //std::cout<<"Laczenie " << ip.toStdString() << ": " << port << std::endl;
+    std::cout<<"Laczenie " << ip.toStdString() << ": " << port << std::endl;
     m_socket.connectToHost(ip, port);
     m_socket.waitForConnected(2000);
     connect(&m_socket, &QTcpSocket::readyRead, this, &klientTCP::onReadyRead);
