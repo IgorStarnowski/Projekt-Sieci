@@ -123,10 +123,10 @@ void ModelARX::wypiszKonf() const {
     std::cout << "[ARX] k: " << m_k << ", Szum: " << m_szum << "\n";
 
     std::cout << "  Wsp. A: ";
-    for(double val : m_A) std::cout << val << " "; // Wypisanie elementów wektora A [cite: 431]
+    for(double val : m_A) std::cout << val << " "; // Wypisanie elementów wektora A
 
     std::cout << "\n  Wsp. B: ";
-    for(double val : m_B) std::cout << val << " "; // Wypisanie elementów wektora B [cite: 431]
+    for(double val : m_B) std::cout << val << " "; // Wypisanie elementów wektora B
 
     std::cout << "\n  Limity U: [" << m_minU << ", " << m_maxU << "] (" << (m_ogranicz_u ? "ON" : "OFF") << ")";
     std::cout << "\n  Limity Y: [" << m_minY << ", " << m_maxY << "] (" << (m_ogranicz_y ? "ON" : "OFF") << ")" << std::endl;
@@ -157,6 +157,7 @@ void RegulatorPID::setNastawy(double k, double Ti, double Td, LiczCalk tryb) {
 
     m_liczCalk = tryb;
 }
+//sieć
 QDataStream &operator<<(QDataStream &out, const RegulatorPID &v) {
     out << (double)v.m_k << (double)v.m_Ti << (double)v.m_Td << (qint32)v.m_liczCalk;
     return out;
@@ -167,6 +168,8 @@ QDataStream &operator>>(QDataStream &in, RegulatorPID &v) {
     v.m_liczCalk = (LiczCalk)tryb;
     return in;
 }
+
+//sieć
 void RegulatorPID::wypiszKonf() const {
     std::cout << "[PID] k: " << m_k
               << ", Ti: " << m_Ti

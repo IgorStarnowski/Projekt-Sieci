@@ -14,6 +14,7 @@ class SerwerTCP : public QObject
 public:
     explicit SerwerTCP(QObject *parent = nullptr);
     void startListening(int port);
+    void zatrzymaj();
 private slots:
     void onNewCon();
     void onRedyRead();
@@ -24,6 +25,11 @@ private:
     QTcpServer m_server;
     QTcpSocket* m_clientSocket = nullptr;
     RegulatorPID m_lokalnyPID;
+signals:
+   void klientPodlaczony();
+   void klientRozlaczony();
+   void otrzymanoPID(RegulatorPID pid);
+   void otrzymanoARX(ModelARX arx);
 };
 
 #endif // SERWERTCP_H

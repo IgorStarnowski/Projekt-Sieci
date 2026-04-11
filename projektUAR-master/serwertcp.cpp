@@ -13,7 +13,7 @@ void SerwerTCP::startListening(int port){
 }
 void SerwerTCP::onNewCon(){
     m_clientSocket = m_server.nextPendingConnection();
-    std::cout << "Klient polaczony" << std::endl;
+    emit klientPodlaczony();
     connect(m_clientSocket, SIGNAL(readyRead()),this, SLOT(onRedyRead()));
     connect(m_clientSocket, SIGNAL(disconnected()), this, SLOT(onDisc()));
 }
@@ -25,21 +25,11 @@ void SerwerTCP::onRedyRead(){
     if (pakietID == 1) {
         RegulatorPID odebranyPID;
         in >> odebranyPID;
-        std::cout << "Odebrano konfig PID" << std::endl;
-        odebranyPID.wypiszKonf();
-        std::cout << "[SERWER] Odsylam testowy ARX do klienta..." << std::endl;
-        ModelARX odpARX;
-        odpARX.setParams({9.9, 8.8}, {7.7, 6.6}, 5);
-        this->sendConf(2, odpARX);
+        emit otrzymanoPID(odebranyPID);
     }else if(pakietID == 2){
         ModelARX odebranyARX;
         in >> odebranyARX;
-        std::cout << "Odebrano konfig ARX" << std::endl;
-        odebranyARX.wypiszKonf();
-        std::cout << "[SERWER] Odsylam testowy PID do klienta..." << std::endl;
-        RegulatorPID odpPID;
-        odpPID.setNastawy(3.14, 9.99, 0.55, LiczCalk::Wew);
-        this->sendConf(1, odpPID);
+        emit otrzymanoARX(odebranyARX);
     }
 }
 void SerwerTCP::sendConf(int pakietID, const RegulatorPID &pid){
@@ -68,7 +58,13 @@ void SerwerTCP::sendConf(int pakietID, const ModelARX &arx){
 }
 
 void SerwerTCP::onDisc(){
-    std::cout << "Klient sie rozlaczyl" << std::endl;
+    emit klientRozlaczony();
     m_clientSocket->deleteLater();
     m_clientSocket = nullptr;
+}
+void SerwerTCP::zatrzymaj(){
+    m_server.close();
+    if(m_clientSocket){
+        m_clientSocket->disconnectFromHost();
+    }
 }

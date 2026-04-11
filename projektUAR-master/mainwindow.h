@@ -11,6 +11,9 @@
 #include "UARService.h"
 #include "qcustomplot.h"
 #include "dialogarx.h"
+#include "dialogsiec.h"
+#include "klienttcp.h"
+#include "serwertcp.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -41,8 +44,15 @@ private slots:
     void saveConfig();
     void loadConfig();
 
+    void on_btnSiec_clicked();
+
+    void on_btnRozlacz_clicked();
+
 private:
     Ui::MainWindow *ui;
+
+    klientTCP *klient = nullptr;
+    SerwerTCP *serwer = nullptr;
 
     // Logika (warstwa usług)
     UARService *m_service;

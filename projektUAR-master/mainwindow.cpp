@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -28,6 +30,8 @@ MainWindow::MainWindow(QWidget *parent)
     // Inicjalizacja parametrów początkowych
     updateParameters();
     pushARXParamsToService();
+    ui->statusLabel->setText("STATUS: TRYB LOKALNY");
+    ui->statusLabel->setStyleSheet("background-color: #007bff; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
 }
 
 MainWindow::~MainWindow() {
@@ -396,4 +400,66 @@ void MainWindow::loadConfig() {
 
     // Wymuszenie aktualizacji
     updateParameters();
+
 }
+
+void MainWindow::on_btnSiec_clicked()
+{
+    Dialogsiec oknoSieci(this);
+    if(oknoSieci.exec() == QDialog::Accepted){
+        bool toKlient = oknoSieci.czyKlient();
+        int port = oknoSieci.getPort();
+        QString ip = oknoSieci.getIP();
+        if(toKlient){
+            klient = new klientTCP(this);
+            connect(klient, &klientTCP::polaczonoZSerwerem, this, [this](){
+                ui->statusLabel->setText("STATUS: POŁĄCZONO (SIEĆ)");
+                ui->statusLabel->setStyleSheet("background-color: #28a745; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
+            });
+            connect(klient, &klientTCP::rozlaczonoZSerwerem, this, [this](){
+                ui->statusLabel->setText("STATUS: BŁĄD POŁĄCZENIA/ROZŁĄCZONO");
+                ui->statusLabel->setStyleSheet("background-color: #dc3545; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
+            });
+            klient->conToServ(ip,port);
+        } else {
+            serwer = new SerwerTCP(this);
+            serwer->startListening(port);
+            ui->statusLabel->setText("STATUS: NASŁUCHIWANIE (SERWER)");
+            ui->statusLabel->setStyleSheet("background-color: #007bff; color: white;");
+            connect(serwer, &SerwerTCP::klientPodlaczony, this, [this](){
+                ui->statusLabel->setText("STATUS: POŁĄCZONO Z KLIENTEM");
+                ui->statusLabel->setStyleSheet("background-color: #28a745; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
+            });
+            connect(serwer, &SerwerTCP::klientRozlaczony, this, [this](){
+                ui->statusLabel->setText("STATUS: BŁĄD POŁĄCZENIA/ROZŁĄCZONO");
+                ui->statusLabel->setStyleSheet("background-color: #dc3545; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
+            });
+        }
+    } else {
+
+        qDebug() << "Odrzucono ustawienia sieciowe";
+        ui->statusLabel->setText("STATUS: TRYB LOKALNY");
+        ui->statusLabel->setStyleSheet("background-color: #007bff; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
+    }
+}
+
+
+void MainWindow::on_btnRozlacz_clicked()
+{
+    if (klient != nullptr){
+        klient->rozlacz();
+        klient->deleteLater();
+        klient = nullptr;
+        qDebug() << "Zabito klienta";
+    }
+    if (serwer != nullptr){
+        serwer->zatrzymaj();
+        serwer->deleteLater();
+        serwer = nullptr;
+        qDebug() << "Zabito serwer";
+    }
+    ui->statusLabel->setText("STATUS: TRYB LOKALNY");
+    ui->statusLabel->setStyleSheet("background-color: #007bff; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
+
+}
+

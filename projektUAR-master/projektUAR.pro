@@ -9,6 +9,7 @@ TEMPLATE = app
 SOURCES += main.cpp \
            UARService.cpp \
            dialogarx.cpp \
+           dialogsiec.cpp \
            klienttcp.cpp \
            mainwindow.cpp \
            UAR.cpp \
@@ -20,10 +21,12 @@ HEADERS  += mainwindow.h \
             UAR.h \
             UARService.h \
             dialogarx.h \
+            dialogsiec.h \
             klienttcp.h \
             qcustomplot.h \
             dialogarx.h \
             serwertcp.h
 
 FORMS    += mainwindow.ui \
-    dialogarx.ui
+    dialogarx.ui \
+    dialogsiec.ui

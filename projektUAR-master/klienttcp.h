@@ -16,11 +16,17 @@ public:
     void sendConf(int pakietID, const RegulatorPID &pid);
     void sendConf(int pakietID, const ModelARX &arx);
     void onReadyRead();
+    void rozlacz();
 private slots:
     void onConnect();
     void onDisc();
 private:
     QTcpSocket m_socket;
+signals:
+   void polaczonoZSerwerem();
+   void rozlaczonoZSerwerem();
+   void otrzymanoPID(RegulatorPID pid);
+   void otrzymanoARX(ModelARX arx);
 };
 
 #endif // KLIENTTCP_H
