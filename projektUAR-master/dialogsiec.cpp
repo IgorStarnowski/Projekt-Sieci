@@ -10,9 +10,9 @@ Dialogsiec::Dialogsiec(QWidget *parent) :
     ui->setupUi(this);
     this->setWindowTitle("Ustawienia sieciowe");
     ui->portEdit->setValidator(new QIntValidator(1,65535, this));
-    QRegularExpression rxIP("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
-    QValidator *ipValidator = new QRegularExpressionValidator(rxIP, this);
-    ui->adresEdit->setValidator(ipValidator);
+//    QRegularExpression rxIP("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+//    QValidator *ipValidator = new QRegularExpressionValidator(rxIP, this);
+//    ui->adresEdit->setValidator(ipValidator);
     ui->adresEdit->setText("127.0.0.1");
     ui->portEdit->setText("12345");
     ui->klientRadio->setChecked(true);
