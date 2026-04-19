@@ -407,6 +407,7 @@ void MainWindow::zarzadzajKontrolkami(bool polaczono, bool toKlient) {
     // Przycisk łączenia i rozłączania reaguje zawsze na stan połączenia
     ui->btnSiec->setEnabled(!polaczono);
     ui->btnRozlacz->setEnabled(polaczono);
+    ui->btnWyslij->setEnabled(polaczono);
 
     if (polaczono) {
         if (toKlient) {
@@ -482,6 +483,42 @@ void MainWindow::zarzadzajKontrolkami(bool polaczono, bool toKlient) {
     }
 }
 
+void MainWindow::on_btnWyslij_clicked() {
+    if (klient != nullptr) {
+        ModelARX pakietARX;
+
+        auto toVec = [](const QString& s) {
+            std::vector<double> v;
+            QStringList list = s.split(',', Qt::SkipEmptyParts);
+            for(const QString& item : list) {
+                v.push_back(item.trimmed().toDouble());
+            }
+            return v;
+        };
+
+        pakietARX.setParams(toVec(m_curA), toVec(m_curB), m_curK);
+        pakietARX.setLimity(m_curMinU, m_curMaxU, m_curMinY, m_curMaxY, m_curLimitsOn);
+        pakietARX.setSzum(m_curNoise);
+
+        klient->sendConf(2, pakietARX);
+        ui->StatusBar->showMessage("Wysłano parametry obiektu ARX", 3000);
+    }
+    else if (serwer != nullptr) {
+        RegulatorPID pakietPID;
+
+        pakietPID.setNastawy(
+            ui->spinK->value(),
+            ui->spinTi->value(),
+            ui->spinTd->value(),
+            static_cast<LiczCalk>(ui->comboPIDMethod->currentIndex())
+            );
+
+        serwer->sendConf(1, pakietPID);
+        ui->StatusBar->showMessage("Wysłano nastawy układu (PID)", 3000);
+
+    }
+}
+
 void MainWindow::on_btnSiec_clicked()
 {
     Dialogsiec oknoSieci(this);
@@ -501,9 +538,11 @@ void MainWindow::on_btnSiec_clicked()
                 ui->statusLabel->setStyleSheet("background-color: #dc3545; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
                 zarzadzajKontrolkami(false, true);
             });
+            connect(klient, &klientTCP::otrzymanoPID, this, &MainWindow::odbierzPID);
             klient->conToServ(ip,port);
         } else {
             serwer = new SerwerTCP(this);
+            connect(serwer, &SerwerTCP::otrzymanoARX, this, &MainWindow::odbierzARX);
             serwer->startListening(port);
             ui->statusLabel->setText("STATUS: NASŁUCHIWANIE (SERWER)");
             ui->statusLabel->setStyleSheet("background-color: #007bff; color: white;");
@@ -551,3 +590,51 @@ void MainWindow::on_btnRozlacz_clicked()
     }
 }
 
+void MainWindow::odbierzPID(RegulatorPID pid) {
+
+    ui->spinK->blockSignals(true);
+    ui->spinK->setValue(pid.getK());
+    ui->spinK->blockSignals(false);
+
+    ui->spinTi->blockSignals(true);
+    ui->spinTi->setValue(pid.getTi());
+    ui->spinTi->blockSignals(false);
+
+    ui->spinTd->blockSignals(true);
+    ui->spinTd->setValue(pid.getTd());
+    ui->spinTd->blockSignals(false);
+
+    ui->comboPIDMethod->blockSignals(true);
+    ui->comboPIDMethod->setCurrentIndex(static_cast<int>(pid.getMethod()));
+    ui->comboPIDMethod->blockSignals(false);
+
+    updateParameters();
+
+    ui->StatusBar->showMessage("Otrzymano i zaktualizowano: NASTAWY PID", 3000);
+}
+
+void MainWindow::odbierzARX(ModelARX arx) {
+
+    auto fromVec = [](const std::vector<double>& v) {
+        QStringList list;
+        for(double val : v) {
+            list << QString::number(val);
+        }
+        return list.join(", ");
+    };
+
+    m_curA = fromVec(arx.getA());
+    m_curB = fromVec(arx.getB());
+    m_curK = arx.getK();
+
+    m_curMinU = arx.getMinU();
+    m_curMaxU = arx.getMaxU();
+    m_curMinY = arx.getMinY();
+    m_curMaxY = arx.getMaxY();
+    m_curNoise = arx.getNoise();
+    m_curLimitsOn = arx.getLimitsOn();
+
+    pushARXParamsToService();
+
+    ui->StatusBar->showMessage("Otrzymano i zaktualizowano: PARAMETRY ARX", 3000);
+}

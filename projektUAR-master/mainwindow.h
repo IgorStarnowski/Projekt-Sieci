@@ -47,6 +47,9 @@ private slots:
     void on_btnSiec_clicked();
 
     void on_btnRozlacz_clicked();
+    void on_btnWyslij_clicked();
+    void odbierzPID(RegulatorPID pid);
+    void odbierzARX(ModelARX arx);
 
 private:
     Ui::MainWindow *ui;

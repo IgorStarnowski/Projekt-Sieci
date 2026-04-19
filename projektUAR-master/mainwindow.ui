@@ -296,6 +296,19 @@
           </property>
          </widget>
         </item>
+        <item row="5" column="0">
+         <widget class="QPushButton" name="btnWyslij">
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Wyslij dane</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
      </layout>

@@ -49,6 +49,17 @@ public:
     // Główna funkcja
     double symuluj(double sterowanie);
     void reset();
+
+    std::vector<double> getA() const { return m_A; }
+    std::vector<double> getB() const { return m_B; }
+    unsigned int getK() const { return m_k; }
+
+    double getMinU() const { return m_minU; }
+    double getMaxU() const { return m_maxU; }
+    double getMinY() const { return m_minY; }
+    double getMaxY() const { return m_maxY; }
+    double getNoise() const { return m_szum; }
+    bool getLimitsOn() const { return m_ogranicz_y; }
 };
 
 // PID
@@ -84,6 +95,11 @@ public:
     double getUP() const { return m_u_P; }
     double getUI() const { return m_u_I; }
     double getUD() const { return m_u_D; }
+
+    double getK() const { return m_k; }
+    double getTi() const { return m_Ti; }
+    double getTd() const { return m_Td; }
+    LiczCalk getMethod() const { return m_liczCalk; }
 };
 
 // Klasa Generatora
