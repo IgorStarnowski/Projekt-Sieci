@@ -94,6 +94,7 @@ private:
     void setupPlots();             // Konfiguracja wyglądu (osie, kolory)
     void setupConnections();       // Podpięcie sygnałów
     void pushARXParamsToService(); // Wysłanie parametrów ARX do backendu
+    void zarzadzajKontrolkami(bool polaczono, bool toKlient);
 };
 
 #endif // MAINWINDOW_H

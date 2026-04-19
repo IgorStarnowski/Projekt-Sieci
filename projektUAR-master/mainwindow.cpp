@@ -32,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
     pushARXParamsToService();
     ui->statusLabel->setText("STATUS: TRYB LOKALNY");
     ui->statusLabel->setStyleSheet("background-color: #007bff; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
+    zarzadzajKontrolkami(false, false);
 }
 
 MainWindow::~MainWindow() {
@@ -402,6 +403,84 @@ void MainWindow::loadConfig() {
     updateParameters();
 
 }
+void MainWindow::zarzadzajKontrolkami(bool polaczono, bool toKlient) {
+    // Przycisk łączenia i rozłączania reaguje zawsze na stan połączenia
+    ui->btnSiec->setEnabled(!polaczono);
+    ui->btnRozlacz->setEnabled(polaczono);
+
+    if (polaczono) {
+        if (toKlient) {
+            ui->btnStart->setEnabled(false);
+            ui->btnStop->setEnabled(false);
+            ui->btnReset->setEnabled(false);
+            ui->btnPIDReset->setEnabled(false);
+
+            ui->comboPIDMethod->setEnabled(false);
+            ui->spinK->setEnabled(false);
+            ui->spinTi->setEnabled(false);
+            ui->spinTd->setEnabled(false);
+
+            ui->comboGenType->setEnabled(false);
+            ui->spinOkres->setEnabled(false);
+            ui->spinAmp->setEnabled(false);
+            ui->spinOffset->setEnabled(false);
+            ui->spinFill->setEnabled(false);
+            ui->spinInterval->setEnabled(false);
+
+            ui->btnARX->setEnabled(true);
+
+            ui->btnSave->setEnabled(false);
+            ui->btnLoad->setEnabled(false);
+
+        } else {
+
+            ui->btnStart->setEnabled(true);
+            ui->btnStop->setEnabled(true);
+            ui->btnReset->setEnabled(true);
+            ui->btnPIDReset->setEnabled(true);
+
+            ui->comboPIDMethod->setEnabled(true);
+            ui->spinK->setEnabled(true);
+            ui->spinTi->setEnabled(true);
+            ui->spinTd->setEnabled(true);
+
+            ui->comboGenType->setEnabled(true);
+            ui->spinOkres->setEnabled(true);
+            ui->spinAmp->setEnabled(true);
+            ui->spinOffset->setEnabled(true);
+            ui->spinFill->setEnabled(true);
+            ui->spinInterval->setEnabled(true);
+
+            ui->btnARX->setEnabled(false);
+
+            ui->btnSave->setEnabled(true);
+            ui->btnLoad->setEnabled(true);
+        }
+    } else {
+
+        ui->btnStart->setEnabled(true);
+        ui->btnStop->setEnabled(true);
+        ui->btnReset->setEnabled(true);
+        ui->btnPIDReset->setEnabled(true);
+
+        ui->btnARX->setEnabled(true);
+
+        ui->comboPIDMethod->setEnabled(true);
+        ui->spinK->setEnabled(true);
+        ui->spinTi->setEnabled(true);
+        ui->spinTd->setEnabled(true);
+
+        ui->comboGenType->setEnabled(true);
+        ui->spinOkres->setEnabled(true);
+        ui->spinAmp->setEnabled(true);
+        ui->spinOffset->setEnabled(true);
+        ui->spinFill->setEnabled(true);
+        ui->spinInterval->setEnabled(true);
+
+        ui->btnSave->setEnabled(true);
+        ui->btnLoad->setEnabled(true);
+    }
+}
 
 void MainWindow::on_btnSiec_clicked()
 {
@@ -415,10 +494,12 @@ void MainWindow::on_btnSiec_clicked()
             connect(klient, &klientTCP::polaczonoZSerwerem, this, [this](){
                 ui->statusLabel->setText("STATUS: POŁĄCZONO (SIEĆ)");
                 ui->statusLabel->setStyleSheet("background-color: #28a745; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
+                zarzadzajKontrolkami(true, true);
             });
             connect(klient, &klientTCP::rozlaczonoZSerwerem, this, [this](){
                 ui->statusLabel->setText("STATUS: BŁĄD POŁĄCZENIA/ROZŁĄCZONO");
                 ui->statusLabel->setStyleSheet("background-color: #dc3545; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
+                zarzadzajKontrolkami(false, true);
             });
             klient->conToServ(ip,port);
         } else {
@@ -429,10 +510,12 @@ void MainWindow::on_btnSiec_clicked()
             connect(serwer, &SerwerTCP::klientPodlaczony, this, [this](){
                 ui->statusLabel->setText("STATUS: POŁĄCZONO Z KLIENTEM");
                 ui->statusLabel->setStyleSheet("background-color: #28a745; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
+                zarzadzajKontrolkami(true, false);
             });
             connect(serwer, &SerwerTCP::klientRozlaczony, this, [this](){
                 ui->statusLabel->setText("STATUS: BŁĄD POŁĄCZENIA/ROZŁĄCZONO");
                 ui->statusLabel->setStyleSheet("background-color: #dc3545; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
+                zarzadzajKontrolkami(false, false);
             });
         }
     } else {
@@ -440,6 +523,7 @@ void MainWindow::on_btnSiec_clicked()
         qDebug() << "Odrzucono ustawienia sieciowe";
         ui->statusLabel->setText("STATUS: TRYB LOKALNY");
         ui->statusLabel->setStyleSheet("background-color: #007bff; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
+        zarzadzajKontrolkami(false, false);
     }
 }
 
@@ -463,6 +547,7 @@ void MainWindow::on_btnRozlacz_clicked()
         }
     ui->statusLabel->setText("STATUS: TRYB LOKALNY");
     ui->statusLabel->setStyleSheet("background-color: #007bff; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
+    zarzadzajKontrolkami(false, false);
     }
 }
 
