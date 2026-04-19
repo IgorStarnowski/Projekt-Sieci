@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QDebug>
 
 
 
@@ -591,6 +592,11 @@ void MainWindow::on_btnRozlacz_clicked()
 }
 
 void MainWindow::odbierzPID(RegulatorPID pid) {
+
+    qDebug() << "\n=== ODEBRANO PAKIET PID ===";
+    qDebug() << "K:" << pid.getK() << " Ti:" << pid.getTi() << " Td:" << pid.getTd();
+    qDebug() << "Metoda:" << static_cast<int>(pid.getMethod());
+    qDebug() << "===========================\n";
 
     ui->spinK->blockSignals(true);
     ui->spinK->setValue(pid.getK());

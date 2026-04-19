@@ -92,6 +92,7 @@ double ModelARX::symuluj(double u_raw) {
 
     return y_temp;
 }
+
 QDataStream &operator<<(QDataStream &out, const ModelARX &v) {
     out << (quint64)v.m_A.size();
     for(double d : v.m_A) out << d;
@@ -159,13 +160,13 @@ void RegulatorPID::setNastawy(double k, double Ti, double Td, LiczCalk tryb) {
 }
 //sieć
 QDataStream &operator<<(QDataStream &out, const RegulatorPID &v) {
-    out << (double)v.m_k << (double)v.m_Ti << (double)v.m_Td << (qint32)v.m_liczCalk;
+    out << (double)v.m_k << (double)v.m_Ti << (double)v.m_Td << static_cast<qint32>(v.m_liczCalk);
     return out;
 }
 QDataStream &operator>>(QDataStream &in, RegulatorPID &v) {
     qint32 tryb;
     in >> v.m_k >> v.m_Ti >> v.m_Td >> tryb;
-    v.m_liczCalk = (LiczCalk)tryb;
+    v.m_liczCalk = static_cast<LiczCalk>(tryb);
     return in;
 }
 

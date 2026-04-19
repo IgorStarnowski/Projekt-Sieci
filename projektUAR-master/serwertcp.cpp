@@ -36,6 +36,7 @@ void SerwerTCP::onRedyRead(){
 void SerwerTCP::sendConf(int pakietID, const RegulatorPID &pid){
     if(!m_clientSocket || m_clientSocket->state() != QAbstractSocket::ConnectedState){
         std::cout << "[SERWER] Brak klienta" << std::endl;
+        return;
     }
        QByteArray dane;
        QDataStream out(&dane, QIODevice::WriteOnly);
@@ -48,6 +49,7 @@ void SerwerTCP::sendConf(int pakietID, const RegulatorPID &pid){
 void SerwerTCP::sendConf(int pakietID, const ModelARX &arx){
     if(!m_clientSocket || m_clientSocket->state() != QAbstractSocket::ConnectedState){
         std::cout << "[SERWER] Brak klienta" << std::endl;
+        return;
     }
     QByteArray dane;
     QDataStream out(&dane, QIODevice::WriteOnly);
