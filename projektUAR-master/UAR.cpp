@@ -1,7 +1,9 @@
 #include "UAR.h"
+#include "qdebug.h"
 #include <cmath>
 #include <algorithm>
 #include <iostream>
+
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -159,14 +161,26 @@ void RegulatorPID::setNastawy(double k, double Ti, double Td, LiczCalk tryb) {
     m_liczCalk = tryb;
 }
 //sieć
-QDataStream &operator<<(QDataStream &out, const RegulatorPID &v) {
-    out << (double)v.m_k << (double)v.m_Ti << (double)v.m_Td << static_cast<qint32>(v.m_liczCalk);
+QDataStream& operator<<(QDataStream& out, const RegulatorPID& pid) {
+qDebug() << "!!! UWAGA: Wszedłem do operatora ZAPISU (Wysyłam) !!!";
+    out << pid.m_k
+        << pid.m_Ti
+        << pid.m_Td
+        << static_cast<qint32>(pid.m_liczCalk);
     return out;
 }
-QDataStream &operator>>(QDataStream &in, RegulatorPID &v) {
-    qint32 tryb;
-    in >> v.m_k >> v.m_Ti >> v.m_Td >> tryb;
-    v.m_liczCalk = static_cast<LiczCalk>(tryb);
+
+QDataStream& operator>>(QDataStream& in, RegulatorPID& pid) {
+    qDebug() << "!!! UWAGA: Wszedłem do operatora ODCZYTU (Odbieram) !!!";
+    qint32 methodInt;
+
+    in >> pid.m_k
+        >> pid.m_Ti
+        >> pid.m_Td
+        >> methodInt;
+
+    pid.m_liczCalk = static_cast<LiczCalk>(methodInt);
+
     return in;
 }
 

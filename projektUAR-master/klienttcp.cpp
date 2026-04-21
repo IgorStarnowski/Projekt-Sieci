@@ -38,6 +38,7 @@ void klientTCP::onReadyRead() {
     in >> pakietID;
     if (pakietID == 1) {
         RegulatorPID odebranyPID;
+        in >> odebranyPID;
        emit otrzymanoPID(odebranyPID);
     }else if (pakietID == 2) {
         ModelARX odebranyARX;
