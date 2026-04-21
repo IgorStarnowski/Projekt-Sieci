@@ -20,15 +20,7 @@ void klientTCP::onConnect(){
 void klientTCP::onDisc(){
     emit rozlaczonoZSerwerem();
 }
-void klientTCP::sendConf(int pakietID, const RegulatorPID &pid){
-   QByteArray dane;
-   QDataStream out(&dane, QIODevice::WriteOnly);
-   out << (qint8)pakietID;
-   out << pid;
-   m_socket.write(dane);
-   m_socket.waitForBytesWritten();
-   std::cout << "Wyslano konfig" << std::endl;
-}
+
 void klientTCP::sendConf(int pakietID, const ModelARX &arx){
    QByteArray dane;
    QDataStream out(&dane, QIODevice::WriteOnly);

@@ -46,19 +46,7 @@ void SerwerTCP::sendConf(int pakietID, const RegulatorPID &pid){
        m_clientSocket->waitForBytesWritten();
        std::cout << "Wyslano konfig" << std::endl;
     }
-void SerwerTCP::sendConf(int pakietID, const ModelARX &arx){
-    if(!m_clientSocket || m_clientSocket->state() != QAbstractSocket::ConnectedState){
-        std::cout << "[SERWER] Brak klienta" << std::endl;
-        return;
-    }
-    QByteArray dane;
-    QDataStream out(&dane, QIODevice::WriteOnly);
-    out << (qint8)pakietID;
-    out << arx;
-    m_clientSocket->write(dane);
-    m_clientSocket->waitForBytesWritten();
-    std::cout << "Wyslano konfig" << std::endl;
-}
+
 
 void SerwerTCP::onDisc(){
     emit klientRozlaczony();

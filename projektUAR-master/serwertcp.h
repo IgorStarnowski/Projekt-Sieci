@@ -16,7 +16,6 @@ public:
     void startListening(int port);
     void zatrzymaj();
     void sendConf(int pakietID, const RegulatorPID &pid);
-    void sendConf(int pakietID, const ModelARX &arx);
 private slots:
     void onNewCon();
     void onRedyRead();

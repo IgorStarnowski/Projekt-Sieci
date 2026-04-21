@@ -13,7 +13,6 @@ class klientTCP : public QObject
 public:
     explicit klientTCP(QObject *parent = nullptr);
     void conToServ(const QString& ip, int port);
-    void sendConf(int pakietID, const RegulatorPID &pid);
     void sendConf(int pakietID, const ModelARX &arx);
     void onReadyRead();
     void rozlacz();
