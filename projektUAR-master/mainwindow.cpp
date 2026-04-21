@@ -34,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->statusLabel->setText("STATUS: TRYB LOKALNY");
     ui->statusLabel->setStyleSheet("background-color: #007bff; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
     zarzadzajKontrolkami(false, false);
+    setupAutoSendConnections();
 }
 
 MainWindow::~MainWindow() {
@@ -303,6 +304,27 @@ void MainWindow::openARXDialog() {
         m_curNoise = dlg.getNoise();
         m_curLimitsOn = dlg.getLimityWlaczone();
 
+        if (klient != nullptr) {
+            ModelARX pakietARX;
+
+            auto toVec = [](const QString& s) {
+                std::vector<double> v;
+                QStringList list = s.split(',', Qt::SkipEmptyParts);
+                for(const QString& item : list) {
+                    v.push_back(item.trimmed().toDouble());
+                }
+                return v;
+            };
+
+            pakietARX.setParams(toVec(m_curA), toVec(m_curB), m_curK);
+            pakietARX.setLimity(m_curMinU, m_curMaxU, m_curMinY, m_curMaxY, m_curLimitsOn);
+            pakietARX.setSzum(m_curNoise);
+
+            klient->sendConf(KONF_ARX, pakietARX);
+
+            ui->StatusBar->showMessage("Wysłano parametry obiektu ARX (po edycji)", 3000);
+        }
+
         pushARXParamsToService();
     }
 }
@@ -413,7 +435,6 @@ void MainWindow::zarzadzajKontrolkami(bool polaczono, bool toKlient) {
     // Przycisk łączenia i rozłączania reaguje zawsze na stan połączenia
     ui->btnSiec->setEnabled(!polaczono);
     ui->btnRozlacz->setEnabled(polaczono);
-    ui->btnWyslij->setEnabled(polaczono);
 
     if (polaczono) {
         if (toKlient) {
@@ -432,7 +453,7 @@ void MainWindow::zarzadzajKontrolkami(bool polaczono, bool toKlient) {
             ui->spinAmp->setEnabled(false);
             ui->spinOffset->setEnabled(false);
             ui->spinFill->setEnabled(false);
-            ui->spinInterval->setEnabled(false);
+            ui->spinInterval->setEnabled(true);
 
             ui->btnARX->setEnabled(true);
 
@@ -458,7 +479,7 @@ void MainWindow::zarzadzajKontrolkami(bool polaczono, bool toKlient) {
             ui->spinFill->setEnabled(true);
             ui->spinInterval->setEnabled(true);
 
-            ui->btnARX->setEnabled(false);
+            ui->btnARX->setEnabled(false); // zmienic diagnostycznie true (normalnie false)
 
             ui->btnSave->setEnabled(true);
             ui->btnLoad->setEnabled(true);
@@ -488,47 +509,87 @@ void MainWindow::zarzadzajKontrolkami(bool polaczono, bool toKlient) {
         ui->btnLoad->setEnabled(true);
     }
 }
+void MainWindow::setupAutoSendConnections() {
 
-void MainWindow::on_btnWyslij_clicked() {
-    if (klient != nullptr) {
-        qDebug() << "-> Okno to KLIENT, wysyłam ARX"; //diagnostycznie chuja robi xd
-        ModelARX pakietARX;
+    connect(ui->spinK, &QDoubleSpinBox::editingFinished,
+            this, &MainWindow::sendPIDConfig);
+    connect(ui->spinTi, &QDoubleSpinBox::editingFinished,
+            this, &MainWindow::sendPIDConfig);
+    connect(ui->spinTd, &QDoubleSpinBox::editingFinished,
+            this, &MainWindow::sendPIDConfig);
 
-        auto toVec = [](const QString& s) {
-            std::vector<double> v;
-            QStringList list = s.split(',', Qt::SkipEmptyParts);
-            for(const QString& item : list) {
-                v.push_back(item.trimmed().toDouble());
-            }
-            return v;
-        };
+    connect(ui->comboPIDMethod, QOverload<int>::of(&QComboBox::activated),
+            this, &MainWindow::sendPIDConfig);
 
-        pakietARX.setParams(toVec(m_curA), toVec(m_curB), m_curK);
-        pakietARX.setLimity(m_curMinU, m_curMaxU, m_curMinY, m_curMaxY, m_curLimitsOn);
-        pakietARX.setSzum(m_curNoise);
+    connect(ui->comboGenType, QOverload<int>::of(&QComboBox::activated),
+            this, &MainWindow::sendGenConfig);
 
-        klient->sendConf(KONF_ARX, pakietARX);
-        ui->StatusBar->showMessage("Wysłano parametry obiektu ARX", 3000);
-    }
-    else if (serwer != nullptr) {
-        qDebug() << "-> Okno to SERWER, wysyłam PID"; //diagnostycznie chuja robi xd
-        m_pidK = ui->spinK->value();
-        m_pidTi = ui->spinTi->value();
-        m_pidTd = ui->spinTd->value();
-        m_pidMethod = static_cast<LiczCalk>(ui->comboPIDMethod->currentIndex());
+    connect(ui->spinOkres, &QDoubleSpinBox::editingFinished,
+            this, &MainWindow::sendGenConfig);
 
-        RegulatorPID pakietPID;
+    connect(ui->spinAmp, &QDoubleSpinBox::editingFinished,
+            this, &MainWindow::sendGenConfig);
 
-        pakietPID.setNastawy(m_pidK, m_pidTi, m_pidTd, m_pidMethod);
+    connect(ui->spinOffset, &QDoubleSpinBox::editingFinished,
+            this, &MainWindow::sendGenConfig);
 
-        qDebug() << "1. Pobrano z UI K:" << ui->spinK->value(); //diagnostycznie
-        pakietPID.setNastawy(m_pidK, m_pidTi, m_pidTd, m_pidMethod); //diagnostycznie chuja robi xd
-        qDebug() << "2. W pakiecie przed wysyłką K:" << pakietPID.getK(); // dotad
+    connect(ui->spinFill, &QDoubleSpinBox::editingFinished,
+            this, &MainWindow::sendGenConfig);
 
-        serwer->sendConf(KONF_PID, pakietPID);
-        ui->StatusBar->showMessage("Wysłano nastawy układu (PID)", 3000);
+}
+void MainWindow::sendGenConfig() {
+    if (serwer == nullptr) return;
 
-    }
+    TrybGen tryb = static_cast<TrybGen>(ui->comboGenType->currentIndex());
+    double okres = ui->spinOkres->value();
+    double ampl = ui->spinAmp->value();
+    double off = ui->spinOffset->value();
+    double wyp = ui->spinFill->value();
+
+    int interwal_ms = 200;
+
+    GeneratorWartosci pakietGen;
+    pakietGen.setParams(tryb, okres, ampl, off, wyp, interwal_ms);
+
+    serwer->sendConf(KONF_GEN, pakietGen);
+
+    ui->StatusBar->showMessage("Wysłano parametry generatora [Auto]", 2000);
+}
+
+void MainWindow::sendPIDConfig() {
+    if (serwer == nullptr) return;
+
+    m_pidK = ui->spinK->value();
+    m_pidTi = ui->spinTi->value();
+    m_pidTd = ui->spinTd->value();
+    m_pidMethod = static_cast<LiczCalk>(ui->comboPIDMethod->currentIndex());
+
+    RegulatorPID pakietPID;
+    pakietPID.setNastawy(m_pidK, m_pidTi, m_pidTd, m_pidMethod);
+
+    serwer->sendConf(KONF_PID, pakietPID);
+    ui->StatusBar->showMessage("Wysłano nastawy układu (PID) [Auto]", 2000);
+}
+
+void MainWindow::sendARXConfig() {
+    if (klient == nullptr) return;
+
+    ModelARX pakietARX;
+
+    auto toVec = [](const QString& s) {
+        std::vector<double> v;
+        QStringList list = s.split(',', Qt::SkipEmptyParts);
+        for(const QString& item : list) {
+            v.push_back(item.trimmed().toDouble());
+        }
+        return v;
+    };
+    pakietARX.setParams(toVec(m_curA), toVec(m_curB), m_curK);
+    pakietARX.setLimity(m_curMinU, m_curMaxU, m_curMinY, m_curMaxY, m_curLimitsOn);
+    pakietARX.setSzum(m_curNoise);
+
+    klient->sendConf(KONF_ARX, pakietARX);
+    ui->StatusBar->showMessage("Wysłano parametry obiektu ARX [Auto]", 2000);
 }
 
 void MainWindow::on_btnSiec_clicked()
@@ -551,6 +612,7 @@ void MainWindow::on_btnSiec_clicked()
                 zarzadzajKontrolkami(false, true);
             });
             connect(klient, &klientTCP::otrzymanoNowyPID, this, &MainWindow::odbierzPID);
+            connect(klient, &klientTCP::otrzymanoNowyGen, this, &MainWindow::odbierzGen);
             klient->conToServ(ip,port);
         } else {
             serwer = new SerwerTCP(this);
@@ -604,11 +666,6 @@ void MainWindow::on_btnRozlacz_clicked()
 
 void MainWindow::odbierzPID(RegulatorPID pid) {
 
-    qDebug() << "\n=== ODEBRANO PAKIET PID ===";
-    qDebug() << "K:" << pid.getK() << " Ti:" << pid.getTi() << " Td:" << pid.getTd();
-    qDebug() << "Metoda:" << static_cast<int>(pid.getMethod());
-    qDebug() << "===========================\n";
-
     m_pidK = pid.getK();
     m_pidTi = pid.getTi();
     m_pidTd = pid.getTd();
@@ -616,8 +673,7 @@ void MainWindow::odbierzPID(RegulatorPID pid) {
 
     updatePIDUI();
 
-    updateParameters(); //chyba
-    // ^ Zakładam, że wcześniej funkcja updateParameters() robiła coś w tym stylu
+    updateParameters();
 
     ui->StatusBar->showMessage("Otrzymano i zaktualizowano: NASTAWY PID", 3000);
 }
@@ -648,6 +704,20 @@ void MainWindow::odbierzARX(ModelARX arx) {
     ui->StatusBar->showMessage("Otrzymano i zaktualizowano: PARAMETRY ARX", 3000);
 }
 
+void MainWindow::odbierzGen(GeneratorWartosci gen) {
+    m_genTryb = gen.getTryb();
+    m_genOkresRzecz = gen.getOkresRzecz();
+    m_genAmplituda = gen.getAmplituda();
+    m_genOffset = gen.getOffset();
+    m_genWypelnienie = gen.getWypelnienie();
+
+    updateGenUI();
+
+    updateParameters();
+
+    ui->StatusBar->showMessage("Otrzymano i zaktualizowano: PARAMETRY GENERATORA", 3000);
+}
+
 void MainWindow::updatePIDUI() {
     // Hermetyzacja aktualizacji UI. Blokowanie sygnałów w jednym miejscu.
     const QSignalBlocker blockerK(ui->spinK);
@@ -661,4 +731,23 @@ void MainWindow::updatePIDUI() {
 
     const QSignalBlocker blockerMethod(ui->comboPIDMethod);
     ui->comboPIDMethod->setCurrentIndex(static_cast<int>(m_pidMethod));
+}
+
+void MainWindow::updateGenUI() {
+    // Hermetyzacja aktualizacji UI generatora. Blokowanie sygnałów w jednym miejscu.
+
+    const QSignalBlocker blockerTryb(ui->comboGenType);
+    ui->comboGenType->setCurrentIndex(static_cast<int>(m_genTryb));
+
+    const QSignalBlocker blockerOkres(ui->spinOkres);
+    ui->spinOkres->setValue(m_genOkresRzecz);
+
+    const QSignalBlocker blockerAmpl(ui->spinAmp);
+    ui->spinAmp->setValue(m_genAmplituda);
+
+    const QSignalBlocker blockerOff(ui->spinOffset);
+    ui->spinOffset->setValue(m_genOffset);
+
+    const QSignalBlocker blockerWyp(ui->spinFill);
+    ui->spinFill->setValue(m_genWypelnienie);
 }

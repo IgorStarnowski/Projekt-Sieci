@@ -162,7 +162,7 @@ void RegulatorPID::setNastawy(double k, double Ti, double Td, LiczCalk tryb) {
 }
 //sieć
 QDataStream& operator<<(QDataStream& out, const RegulatorPID& pid) {
-qDebug() << "!!! UWAGA: Wszedłem do operatora ZAPISU (Wysyłam) !!!";
+
     out << pid.m_k
         << pid.m_Ti
         << pid.m_Td
@@ -171,7 +171,7 @@ qDebug() << "!!! UWAGA: Wszedłem do operatora ZAPISU (Wysyłam) !!!";
 }
 
 QDataStream& operator>>(QDataStream& in, RegulatorPID& pid) {
-    qDebug() << "!!! UWAGA: Wszedłem do operatora ODCZYTU (Odbieram) !!!";
+
     qint32 methodInt;
 
     in >> pid.m_k

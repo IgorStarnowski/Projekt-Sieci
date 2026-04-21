@@ -4,6 +4,7 @@
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QMessageBox>
+#include "UAR.h"
 
 namespace Ui { class DialogARX; }
 
@@ -26,6 +27,8 @@ public:
     double getNoise() const;
 
     bool getLimityWlaczone() const;
+signals:
+    void arxDataReady(ModelARX pakietARX);
 
 private slots:
     void accept();

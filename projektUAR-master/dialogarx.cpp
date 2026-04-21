@@ -47,41 +47,52 @@ double DialogARX::getNoise() const { return ui->spinSzum->value(); }
 bool DialogARX::getLimityWlaczone() const { return ui->checkLimity->isChecked(); }
 
 void DialogARX::accept() {
-    // Pobieramy tekst z pól edycji
     QString textA = ui->editA->text();
     QString textB = ui->editB->text();
 
-    // Liczymy elementy oddzielone przecinkami
     QStringList listA = textA.split(',', Qt::SkipEmptyParts);
     QStringList listB = textB.split(',', Qt::SkipEmptyParts);
 
-    // Sprawdzamy warunek (minimum 3 współczynniki)
     if (listA.size() < 3 || listB.size() < 3) {
         QMessageBox::warning(this, "Błąd parametrów ARX",
                              "Proszę wprowadzić min. 3 współczynniki dla wielomianów A oraz B\n");
-
         return;
     }
 
     bool ok;
+    std::vector<double> vecA;
+    std::vector<double> vecB;
 
+    // Pobieranie wartości A
     for (const QString &str : listA) {
-        str.trimmed().toDouble(&ok);
+        double val = str.trimmed().toDouble(&ok);
         if (!ok) {
             QMessageBox::warning(this, "Błąd parametrów ARX", "Współczynniki wielomianu A muszą być poprawnymi liczbami!");
             return;
         }
+        vecA.push_back(val);
     }
 
+    // Pobieranie wartości B
     for (const QString &str : listB) {
-        str.trimmed().toDouble(&ok);
+        double val = str.trimmed().toDouble(&ok);
         if (!ok) {
             QMessageBox::warning(this, "Błąd parametrów ARX", "Współczynniki wielomianu B muszą być poprawnymi liczbami!");
             return;
         }
+        vecB.push_back(val);
     }
 
+    ModelARX pakietARX;
 
-    // Jeśli wszystko OK wywołujemy oryginalną metodę, która zamyka okno
+    pakietARX.setParams(vecA, vecB, ui->spinK->value());
+
+    pakietARX.setLimity(ui->spinMinU->value(), ui->spinMaxU->value(),
+                        ui->spinMinY->value(), ui->spinMaxY->value(),
+                        ui->checkLimity->isChecked());
+    pakietARX.setSzum(ui->spinSzum->value());
+
+    emit arxDataReady(pakietARX);
+
     QDialog::accept();
 }

@@ -138,6 +138,11 @@ public:
     void reset();
     friend QDataStream &operator<<(QDataStream &out, const GeneratorWartosci &gen);
     friend QDataStream &operator>>(QDataStream &in, GeneratorWartosci &gen);
+    TrybGen getTryb() const { return m_tryb; }
+    double getOkresRzecz() const { return m_T_RZ; }
+    double getAmplituda() const { return m_A; }
+    double getOffset() const { return m_S; }
+    double getWypelnienie() const { return m_p; }
 };
 
 // UAR

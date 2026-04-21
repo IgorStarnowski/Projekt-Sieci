@@ -47,9 +47,14 @@ private slots:
     void on_btnSiec_clicked();
 
     void on_btnRozlacz_clicked();
-    void on_btnWyslij_clicked();
+
+    void sendPIDConfig();
+    void sendARXConfig();
+    void sendGenConfig();
+
     void odbierzPID(RegulatorPID pid);
     void odbierzARX(ModelARX arx);
+    void odbierzGen(GeneratorWartosci gen);
 
 private:
     Ui::MainWindow *ui;
@@ -71,6 +76,8 @@ private:
     LiczCalk m_pidMethod;
 
     void updatePIDUI();
+    void updateGenUI();
+    void setupAutoSendConnections();
 
     // Parametry nasycenia i szumu
     double m_curMinU = -10.0;
@@ -79,6 +86,12 @@ private:
     double m_curMaxY = 10.0;
     double m_curNoise = 0.0;
     bool m_curLimitsOn = true;
+
+    TrybGen m_genTryb;
+    double m_genOkresRzecz;
+    double m_genAmplituda;
+    double m_genOffset;
+    double m_genWypelnienie;
 
     double aktualnyCzas;
 
