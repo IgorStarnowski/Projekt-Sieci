@@ -52,16 +52,36 @@ void DialogARX::accept() {
     QString textB = ui->editB->text();
 
     // Liczymy elementy oddzielone przecinkami
-    int countA = textA.split(',', Qt::SkipEmptyParts).size();
-    int countB = textB.split(',', Qt::SkipEmptyParts).size();
+    QStringList listA = textA.split(',', Qt::SkipEmptyParts);
+    QStringList listB = textB.split(',', Qt::SkipEmptyParts);
 
     // Sprawdzamy warunek (minimum 3 współczynniki)
-    if (countA < 3 || countB < 3) {
+    if (listA.size() < 3 || listB.size() < 3) {
         QMessageBox::warning(this, "Błąd parametrów ARX",
                              "Proszę wprowadzić min. 3 współczynniki dla wielomianów A oraz B\n");
 
         return;
     }
+
+    bool ok;
+
+    for (const QString &str : listA) {
+        str.trimmed().toDouble(&ok);
+        if (!ok) {
+            QMessageBox::warning(this, "Błąd parametrów ARX", "Współczynniki wielomianu A muszą być poprawnymi liczbami!");
+            return;
+        }
+    }
+
+    for (const QString &str : listB) {
+        str.trimmed().toDouble(&ok);
+        if (!ok) {
+            QMessageBox::warning(this, "Błąd parametrów ARX", "Współczynniki wielomianu B muszą być poprawnymi liczbami!");
+            return;
+        }
+    }
+
+
     // Jeśli wszystko OK wywołujemy oryginalną metodę, która zamyka okno
     QDialog::accept();
 }

@@ -127,11 +127,16 @@ void MainWindow::setupConnections() {
     connect(ui->btnSave, &QPushButton::clicked, this, &MainWindow::saveConfig);
     connect(ui->btnLoad, &QPushButton::clicked, this, &MainWindow::loadConfig);
 
-    // Automatyczna aktualizacja parametrów
-    QList<QDoubleSpinBox*> spins = this->findChildren<QDoubleSpinBox*>();
-    for(auto spin : spins) {
-        connect(spin, &QDoubleSpinBox::editingFinished, this, &MainWindow::updateParameters);
-    }
+    connect(ui->spinK,      &QDoubleSpinBox::editingFinished, this, &MainWindow::updateParameters);
+    connect(ui->spinTi,     &QDoubleSpinBox::editingFinished, this, &MainWindow::updateParameters);
+    connect(ui->spinTd,     &QDoubleSpinBox::editingFinished, this, &MainWindow::updateParameters);
+    connect(ui->spinAmp,    &QDoubleSpinBox::editingFinished, this, &MainWindow::updateParameters);
+    connect(ui->spinOffset, &QDoubleSpinBox::editingFinished, this, &MainWindow::updateParameters);
+    connect(ui->spinOkres,  &QDoubleSpinBox::editingFinished, this, &MainWindow::updateParameters);
+    connect(ui->spinFill,   &QDoubleSpinBox::editingFinished, this, &MainWindow::updateParameters);
+
+    connect(ui->spinWidth,    &QSpinBox::editingFinished, this, &MainWindow::updateParameters);
+    connect(ui->spinInterval, &QSpinBox::editingFinished, this, &MainWindow::updateParameters);
 
     connect(ui->comboPIDMethod, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::updateParameters);
     connect(ui->comboGenType, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::updateParameters);
