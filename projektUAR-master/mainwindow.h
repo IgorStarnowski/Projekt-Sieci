@@ -65,6 +65,13 @@ private:
     QString m_curB = "0.5, 0.0, 0.0";
     int m_curK = 1;
 
+    double m_pidK;
+    double m_pidTi;
+    double m_pidTd;
+    LiczCalk m_pidMethod;
+
+    void updatePIDUI();
+
     // Parametry nasycenia i szumu
     double m_curMinU = -10.0;
     double m_curMaxU = 10.0;

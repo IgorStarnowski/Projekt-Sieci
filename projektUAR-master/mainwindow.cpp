@@ -491,6 +491,7 @@ void MainWindow::zarzadzajKontrolkami(bool polaczono, bool toKlient) {
 
 void MainWindow::on_btnWyslij_clicked() {
     if (klient != nullptr) {
+        qDebug() << "-> Okno to KLIENT, wysyłam ARX"; //diagnostycznie chuja robi xd
         ModelARX pakietARX;
 
         auto toVec = [](const QString& s) {
@@ -510,14 +511,19 @@ void MainWindow::on_btnWyslij_clicked() {
         ui->StatusBar->showMessage("Wysłano parametry obiektu ARX", 3000);
     }
     else if (serwer != nullptr) {
+        qDebug() << "-> Okno to SERWER, wysyłam PID"; //diagnostycznie chuja robi xd
+        m_pidK = ui->spinK->value();
+        m_pidTi = ui->spinTi->value();
+        m_pidTd = ui->spinTd->value();
+        m_pidMethod = static_cast<LiczCalk>(ui->comboPIDMethod->currentIndex());
+
         RegulatorPID pakietPID;
 
-        pakietPID.setNastawy(
-            ui->spinK->value(),
-            ui->spinTi->value(),
-            ui->spinTd->value(),
-            static_cast<LiczCalk>(ui->comboPIDMethod->currentIndex())
-            );
+        pakietPID.setNastawy(m_pidK, m_pidTi, m_pidTd, m_pidMethod);
+
+        qDebug() << "1. Pobrano z UI K:" << ui->spinK->value(); //diagnostycznie
+        pakietPID.setNastawy(m_pidK, m_pidTi, m_pidTd, m_pidMethod); //diagnostycznie chuja robi xd
+        qDebug() << "2. W pakiecie przed wysyłką K:" << pakietPID.getK(); // dotad
 
         serwer->sendConf(1, pakietPID);
         ui->StatusBar->showMessage("Wysłano nastawy układu (PID)", 3000);
@@ -603,23 +609,15 @@ void MainWindow::odbierzPID(RegulatorPID pid) {
     qDebug() << "Metoda:" << static_cast<int>(pid.getMethod());
     qDebug() << "===========================\n";
 
-    ui->spinK->blockSignals(true);
-    ui->spinK->setValue(pid.getK());
-    ui->spinK->blockSignals(false);
+    m_pidK = pid.getK();
+    m_pidTi = pid.getTi();
+    m_pidTd = pid.getTd();
+    m_pidMethod = pid.getMethod();
 
-    ui->spinTi->blockSignals(true);
-    ui->spinTi->setValue(pid.getTi());
-    ui->spinTi->blockSignals(false);
+    updatePIDUI();
 
-    ui->spinTd->blockSignals(true);
-    ui->spinTd->setValue(pid.getTd());
-    ui->spinTd->blockSignals(false);
-
-    ui->comboPIDMethod->blockSignals(true);
-    ui->comboPIDMethod->setCurrentIndex(static_cast<int>(pid.getMethod()));
-    ui->comboPIDMethod->blockSignals(false);
-
-    updateParameters();
+    updateParameters(); //chyba
+    // ^ Zakładam, że wcześniej funkcja updateParameters() robiła coś w tym stylu
 
     ui->StatusBar->showMessage("Otrzymano i zaktualizowano: NASTAWY PID", 3000);
 }
@@ -648,4 +646,19 @@ void MainWindow::odbierzARX(ModelARX arx) {
     pushARXParamsToService();
 
     ui->StatusBar->showMessage("Otrzymano i zaktualizowano: PARAMETRY ARX", 3000);
+}
+
+void MainWindow::updatePIDUI() {
+    // Hermetyzacja aktualizacji UI. Blokowanie sygnałów w jednym miejscu.
+    const QSignalBlocker blockerK(ui->spinK);
+    ui->spinK->setValue(m_pidK);
+
+    const QSignalBlocker blockerTi(ui->spinTi);
+    ui->spinTi->setValue(m_pidTi);
+
+    const QSignalBlocker blockerTd(ui->spinTd);
+    ui->spinTd->setValue(m_pidTd);
+
+    const QSignalBlocker blockerMethod(ui->comboPIDMethod);
+    ui->comboPIDMethod->setCurrentIndex(static_cast<int>(m_pidMethod));
 }
