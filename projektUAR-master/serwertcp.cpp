@@ -1,5 +1,6 @@
 #include "serwertcp.h"
 #include "QMessageBox"
+#include <QDateTime>
 
 SerwerTCP::SerwerTCP(QObject *parent) : QObject(parent), m_server(this)
 {
@@ -19,34 +20,74 @@ void SerwerTCP::onNewCon(){
     connect(m_clientSocket, SIGNAL(disconnected()), this, SLOT(onDisc()));
 }
 void SerwerTCP::onRedyRead(){
-    QByteArray dane = m_clientSocket->readAll();
-    QDataStream in(&dane, QIODevice::ReadOnly);
-    qint8 pakietID;
-    in >> pakietID;
-    if (pakietID == 1) {
-        RegulatorPID odebranyPID;
-        in >> odebranyPID;
-        emit otrzymanoPID(odebranyPID);
-    }else if(pakietID == 2){
-        ModelARX odebranyARX;
-        in >> odebranyARX;
-        emit otrzymanoARX(odebranyARX);
+    QDataStream in(m_clientSocket);
+    in.setVersion(QDataStream::Qt_6_0);
+
+    while (true) {
+        if (oczekiwanyRozmiar == 0) {
+            if (m_clientSocket->bytesAvailable() < sizeof(quint32)) return;
+            in >> oczekiwanyRozmiar;
+        }
+        if (m_clientSocket->bytesAvailable() < (oczekiwanyRozmiar - sizeof(quint32))) return;
+        quint8 pobraneID;
+        qint64 czasWyslania;
+        in >> pobraneID >> czasWyslania;
+        TypPakietu typ = static_cast<TypPakietu>(pobraneID);
+        switch (typ) {
+            case KONF_ARX: {
+                ModelARX odebranyARX;
+                in >> odebranyARX;
+                emit otrzymanoNowyARX(odebranyARX);
+                break;
+            }
+            case PROBKI_SYGNAL: {
+                double t, y;
+                in >> t >> y;
+                emit otrzymanoProbki(t, y);
+                break;
+            }
+            default:
+                qDebug() << "[SERWER] Odrzucono nieznany pakiet o ID:" << pobraneID;
+                break;
+        }
+        oczekiwanyRozmiar = 0;
     }
 }
-void SerwerTCP::sendConf(int pakietID, const RegulatorPID &pid){
+void SerwerTCP::sendConf(TypPakietu pakietID, const RegulatorPID &pid){
     if(!m_clientSocket || m_clientSocket->state() != QAbstractSocket::ConnectedState){
         std::cout << "[SERWER] Brak klienta" << std::endl;
         return;
     }
-       QByteArray dane;
-       QDataStream out(&dane, QIODevice::WriteOnly);
-       out << (qint8)pakietID;
-       out << pid;
-       m_clientSocket->write(dane);
-       m_clientSocket->waitForBytesWritten();
-       std::cout << "Wyslano konfig" << std::endl;
+    QByteArray dane;
+    QDataStream out(&dane, QIODevice::WriteOnly);
+    out << (quint32)0;
+    out << (quint8)pakietID;
+    qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
+    out << timestamp;
+    out << pid;
+    out.device()->seek(0);
+    out << (quint32)dane.size();
+    m_clientSocket->write(dane);
+    m_clientSocket->waitForBytesWritten();
+    std::cout << "Wyslano konfig" << std::endl;
+}
+void SerwerTCP::sendConf(TypPakietu id, const GeneratorWartosci &gen) {
+    if(!m_clientSocket || m_clientSocket->state() != QAbstractSocket::ConnectedState){
+        std::cout << "[SERWER] Brak klienta" << std::endl;
+        return;
     }
+    QByteArray dane;
+    QDataStream out(&dane, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_6_0);
 
+    out << (quint32)0;
+    out << (quint8)id;
+    out << QDateTime::currentMSecsSinceEpoch();
+    out << gen;
+    out.device()->seek(0);
+    out << (quint32)dane.size();
+    m_clientSocket->write(dane);
+}
 
 void SerwerTCP::onDisc(){
     emit klientRozlaczony();

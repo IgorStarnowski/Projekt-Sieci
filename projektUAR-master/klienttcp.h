@@ -13,7 +13,7 @@ class klientTCP : public QObject
 public:
     explicit klientTCP(QObject *parent = nullptr);
     void conToServ(const QString& ip, int port);
-    void sendConf(int pakietID, const ModelARX &arx);
+    void sendConf(TypPakietu pakietID, const ModelARX &arx);
     void onReadyRead();
     void rozlacz();
 private slots:
@@ -21,11 +21,14 @@ private slots:
     void onDisc();
 private:
     QTcpSocket m_socket;
+    quint32 oczekiwanyRozmiar = 0;
 signals:
    void polaczonoZSerwerem();
    void rozlaczonoZSerwerem();
-   void otrzymanoPID(RegulatorPID pid);
-   void otrzymanoARX(ModelARX arx);
+   void otrzymanoNowyPID(const RegulatorPID &pid);
+    void otrzymanoNowyGen(const GeneratorWartosci &gen);
+    void otrzymanoProbki(double t, double u, double w);
+    void otrzymanoKomende(int akcja);
 };
 
 #endif // KLIENTTCP_H

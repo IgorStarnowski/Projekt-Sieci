@@ -507,7 +507,7 @@ void MainWindow::on_btnWyslij_clicked() {
         pakietARX.setLimity(m_curMinU, m_curMaxU, m_curMinY, m_curMaxY, m_curLimitsOn);
         pakietARX.setSzum(m_curNoise);
 
-        klient->sendConf(2, pakietARX);
+        klient->sendConf(KONF_ARX, pakietARX);
         ui->StatusBar->showMessage("Wysłano parametry obiektu ARX", 3000);
     }
     else if (serwer != nullptr) {
@@ -525,7 +525,7 @@ void MainWindow::on_btnWyslij_clicked() {
         pakietPID.setNastawy(m_pidK, m_pidTi, m_pidTd, m_pidMethod); //diagnostycznie chuja robi xd
         qDebug() << "2. W pakiecie przed wysyłką K:" << pakietPID.getK(); // dotad
 
-        serwer->sendConf(1, pakietPID);
+        serwer->sendConf(KONF_PID, pakietPID);
         ui->StatusBar->showMessage("Wysłano nastawy układu (PID)", 3000);
 
     }
@@ -550,11 +550,11 @@ void MainWindow::on_btnSiec_clicked()
                 ui->statusLabel->setStyleSheet("background-color: #dc3545; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
                 zarzadzajKontrolkami(false, true);
             });
-            connect(klient, &klientTCP::otrzymanoPID, this, &MainWindow::odbierzPID);
+            connect(klient, &klientTCP::otrzymanoNowyPID, this, &MainWindow::odbierzPID);
             klient->conToServ(ip,port);
         } else {
             serwer = new SerwerTCP(this);
-            connect(serwer, &SerwerTCP::otrzymanoARX, this, &MainWindow::odbierzARX);
+            connect(serwer, &SerwerTCP::otrzymanoNowyARX, this, &MainWindow::odbierzARX);
             serwer->startListening(port);
             ui->statusLabel->setText("STATUS: NASŁUCHIWANIE (SERWER)");
             ui->statusLabel->setStyleSheet("background-color: #007bff; color: white;");

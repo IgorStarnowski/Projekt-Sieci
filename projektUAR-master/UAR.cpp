@@ -246,7 +246,32 @@ void GeneratorWartosci::setParams(TrybGen tryb, double okres_rzecz, double ampl,
     m_T_T = interwal_ms;
     aktualizujT();
 }
+QDataStream &operator<<(QDataStream &out, const GeneratorWartosci &gen) {
+    out << (qint32)gen.m_T_T;
+    out << gen.m_T_RZ;
+    out << gen.m_A;
+    out << gen.m_S;
+    out << gen.m_p;
+    out << (qint32)gen.m_tryb;
+    out << (qint32)gen.m_i;
+    return out;
+}
+QDataStream &operator>>(QDataStream &in, GeneratorWartosci &gen) {
+    qint32 trybInt, interwal, krok;
 
+    in >> interwal;
+    in >> gen.m_T_RZ;
+    in >> gen.m_A;
+    in >> gen.m_S;
+    in >> gen.m_p;
+    in >> trybInt;
+    in >> krok;
+    gen.m_T_T = interwal;
+    gen.m_tryb = static_cast<TrybGen>(trybInt);
+    gen.m_i = krok;
+    gen.aktualizujT();
+    return in;
+}
 void GeneratorWartosci::aktualizujT() {
     // Przeliczenie okresu w sekundach na okres w próbkach
     if (m_T_T <= 0) m_T_T = 200;

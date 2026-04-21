@@ -15,7 +15,10 @@ public:
     explicit SerwerTCP(QObject *parent = nullptr);
     void startListening(int port);
     void zatrzymaj();
-    void sendConf(int pakietID, const RegulatorPID &pid);
+    void sendConf(TypPakietu pakietID, const RegulatorPID &pid);
+    void sendConf(TypPakietu pakietID, const GeneratorWartosci &gen);
+
+
 private slots:
     void onNewCon();
     void onRedyRead();
@@ -24,11 +27,12 @@ private:
     QTcpServer m_server;
     QTcpSocket* m_clientSocket = nullptr;
     RegulatorPID m_lokalnyPID;
+    quint32 oczekiwanyRozmiar = 0;
 signals:
    void klientPodlaczony();
    void klientRozlaczony();
-   void otrzymanoPID(RegulatorPID pid);
-   void otrzymanoARX(ModelARX arx);
+   void otrzymanoNowyARX(const ModelARX &arx);
+   void otrzymanoProbki(double t, double y);
 };
 
 #endif // SERWERTCP_H
