@@ -10,7 +10,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_service(new UARService(this))
 {
     ui->setupUi(this);
-
+    oknoARX = new DialogARX(this);
     // Tworzenie wykresów i dodawanie do layoutu
     m_plotY = new QCustomPlot();
     m_plotError = new QCustomPlot();
@@ -286,23 +286,22 @@ void MainWindow::updateParameters() {
 
 // Obsługa okna dialogowego ARX
 void MainWindow::openARXDialog() {
-    DialogARX dlg(this);
 
-    dlg.setData(m_curA, m_curB, m_curK,
+    oknoARX->setData(m_curA, m_curB, m_curK,
                 m_curMinU, m_curMaxU, m_curMinY, m_curMaxY, m_curNoise,
                 m_curLimitsOn);
 
-    if (dlg.exec() == QDialog::Accepted) {
-        m_curA = dlg.getA();
-        m_curB = dlg.getB();
-        m_curK = dlg.getK();
+    if (oknoARX->exec() == QDialog::Accepted) {
+        m_curA = oknoARX->getA();
+        m_curB = oknoARX->getB();
+        m_curK = oknoARX->getK();
 
-        m_curMinU = dlg.getMinU();
-        m_curMaxU = dlg.getMaxU();
-        m_curMinY = dlg.getMinY();
-        m_curMaxY = dlg.getMaxY();
-        m_curNoise = dlg.getNoise();
-        m_curLimitsOn = dlg.getLimityWlaczone();
+        m_curMinU = oknoARX->getMinU();
+        m_curMaxU = oknoARX->getMaxU();
+        m_curMinY = oknoARX->getMinY();
+        m_curMaxY = oknoARX->getMaxY();
+        m_curNoise = oknoARX->getNoise();
+        m_curLimitsOn = oknoARX->getLimityWlaczone();
 
         if (klient != nullptr) {
             ModelARX pakietARX;
@@ -479,7 +478,7 @@ void MainWindow::zarzadzajKontrolkami(bool polaczono, bool toKlient) {
             ui->spinFill->setEnabled(true);
             ui->spinInterval->setEnabled(true);
 
-            ui->btnARX->setEnabled(false); // zmienic diagnostycznie true (normalnie false)
+            oknoARX->zablokujPola(true);
 
             ui->btnSave->setEnabled(true);
             ui->btnLoad->setEnabled(true);
@@ -492,6 +491,7 @@ void MainWindow::zarzadzajKontrolkami(bool polaczono, bool toKlient) {
         ui->btnPIDReset->setEnabled(true);
 
         ui->btnARX->setEnabled(true);
+        oknoARX->zablokujPola(false);
 
         ui->comboPIDMethod->setEnabled(true);
         ui->spinK->setEnabled(true);
@@ -602,7 +602,8 @@ void MainWindow::on_btnSiec_clicked()
         if(toKlient){
             klient = new klientTCP(this);
             connect(klient, &klientTCP::polaczonoZSerwerem, this, [this](){
-                ui->statusLabel->setText("STATUS: POŁĄCZONO (SIEĆ)");
+                QString ipSerwera = klient->pobierzIP();
+                ui->statusLabel->setText("STATUS: POŁĄCZONO Z SERWEREM (" + ipSerwera + ")");
                 ui->statusLabel->setStyleSheet("background-color: #28a745; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
                 zarzadzajKontrolkami(true, true);
             });
@@ -618,10 +619,11 @@ void MainWindow::on_btnSiec_clicked()
             serwer = new SerwerTCP(this);
             connect(serwer, &SerwerTCP::otrzymanoNowyARX, this, &MainWindow::odbierzARX);
             serwer->startListening(port);
-            ui->statusLabel->setText("STATUS: NASŁUCHIWANIE (SERWER)");
+            ui->statusLabel->setText("STATUS: NASŁUCHIWANIE NA PORCIE " + QString::number(port));
             ui->statusLabel->setStyleSheet("background-color: #007bff; color: white;");
             connect(serwer, &SerwerTCP::klientPodlaczony, this, [this](){
-                ui->statusLabel->setText("STATUS: POŁĄCZONO Z KLIENTEM");
+                QString ipKlienta = serwer->pobierzIP();
+                ui->statusLabel->setText("STATUS: POŁĄCZONO Z KLIENTEM (" + ipKlienta + ")");
                 ui->statusLabel->setStyleSheet("background-color: #28a745; color: white; font-weight: bold; padding: 5px; border-radius: 3px;");
                 zarzadzajKontrolkami(true, false);
             });
@@ -698,6 +700,11 @@ void MainWindow::odbierzARX(ModelARX arx) {
     m_curMaxY = arx.getMaxY();
     m_curNoise = arx.getNoise();
     m_curLimitsOn = arx.getLimitsOn();
+    if (oknoARX != nullptr) {
+        oknoARX->setData(m_curA, m_curB, m_curK,
+        m_curMinU, m_curMaxU, m_curMinY, m_curMaxY,
+        m_curNoise, m_curLimitsOn);
+    }
 
     pushARXParamsToService();
 

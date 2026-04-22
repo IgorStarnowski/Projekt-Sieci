@@ -17,8 +17,7 @@ public:
     void zatrzymaj();
     void sendConf(TypPakietu pakietID, const RegulatorPID &pid);
     void sendConf(TypPakietu pakietID, const GeneratorWartosci &gen);
-
-
+    QString pobierzIP();
 private slots:
     void onNewCon();
     void onRedyRead();

@@ -16,6 +16,7 @@ public:
     void sendConf(TypPakietu pakietID, const ModelARX &arx);
     void onReadyRead();
     void rozlacz();
+    QString pobierzIP();
 private slots:
     void onConnect();
     void onDisc();

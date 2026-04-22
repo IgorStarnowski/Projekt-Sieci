@@ -61,6 +61,7 @@ private:
 
     klientTCP *klient = nullptr;
     SerwerTCP *serwer = nullptr;
+    DialogARX *oknoARX = nullptr;
 
     // Logika (warstwa usług)
     UARService *m_service;

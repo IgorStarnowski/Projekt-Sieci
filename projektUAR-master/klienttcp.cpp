@@ -89,3 +89,9 @@ void klientTCP::rozlacz(){
         m_socket.disconnectFromHost();
     }
 }
+QString klientTCP::pobierzIP() {
+    QString ip = m_socket.peerAddress().toString();
+    ip.replace("::ffff:", "");
+    if (ip == "::1") return "127.0.0.1";
+    return ip;
+}

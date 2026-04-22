@@ -27,6 +27,7 @@ public:
     double getNoise() const;
 
     bool getLimityWlaczone() const;
+    void zablokujPola(bool zablokuj);
 signals:
     void arxDataReady(ModelARX pakietARX);
 

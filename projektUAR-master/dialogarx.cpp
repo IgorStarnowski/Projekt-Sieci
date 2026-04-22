@@ -25,12 +25,20 @@ void DialogARX::setData(QString a, QString b, int k, double minU, double maxU, d
     ui->spinMaxY->setValue(maxY);
     ui->spinSzum->setValue(noise);
 
+    ui->checkLimity->blockSignals(true);
     ui->checkLimity->setChecked(limityWlaczone);
-
-    ui->spinMinU->setEnabled(limityWlaczone);
-    ui->spinMaxU->setEnabled(limityWlaczone);
-    ui->spinMinY->setEnabled(limityWlaczone);
-    ui->spinMaxY->setEnabled(limityWlaczone);
+    ui->checkLimity->blockSignals(false);
+    if (!ui->checkLimity->isEnabled()) {
+        ui->spinMinY->setEnabled(false);
+        ui->spinMaxY->setEnabled(false);
+        ui->spinMinU->setEnabled(false);
+        ui->spinMaxU->setEnabled(false);
+    } else {
+        ui->spinMinY->setEnabled(limityWlaczone);
+        ui->spinMaxY->setEnabled(limityWlaczone);
+        ui->spinMinU->setEnabled(limityWlaczone);
+        ui->spinMaxU->setEnabled(limityWlaczone);
+    }
 }
 
 QString DialogARX::getA() const { return ui->editA->text(); }
@@ -95,4 +103,17 @@ void DialogARX::accept() {
     emit arxDataReady(pakietARX);
 
     QDialog::accept();
+}
+void DialogARX::zablokujPola(bool zablokuj){
+    bool stan = !zablokuj;
+    ui->editA->setEnabled(stan);
+    ui->editB->setEnabled(stan);
+    ui->spinK->setEnabled(stan);
+    ui->spinSzum->setEnabled(stan);
+    ui->checkLimity->setEnabled(stan);
+    bool stanLimitow = stan && ui->checkLimity->isChecked();
+    ui->spinMinY->setEnabled(stanLimitow);
+    ui->spinMaxY->setEnabled(stanLimitow);
+    ui->spinMinU->setEnabled(stanLimitow);
+    ui->spinMaxU->setEnabled(stanLimitow);
 }
