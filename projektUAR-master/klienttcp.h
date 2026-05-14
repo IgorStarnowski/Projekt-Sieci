@@ -17,12 +17,15 @@ public:
     void onReadyRead();
     void rozlacz();
     QString pobierzIP();
+    void sendInterwal(int interwalMs);
 private slots:
     void onConnect();
     void onDisc();
 private:
     QTcpSocket m_socket;
     quint32 oczekiwanyRozmiar = 0;
+    QTimer *timerPing;
+    void wyslijPing();
 signals:
    void polaczonoZSerwerem();
    void rozlaczonoZSerwerem();
@@ -31,6 +34,8 @@ signals:
     void otrzymanoProbki(double t, double u, double w);
     void otrzymanoKomende(int akcja);
     void otrzymanoNowyARX(ModelARX arx);
+    void otrzymanoNowyInterwal(int interwalMs);
+    void nowyPing(qint64 pingMs);
 };
 
 #endif // KLIENTTCP_H

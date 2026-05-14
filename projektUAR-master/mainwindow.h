@@ -57,6 +57,8 @@ private slots:
     void odbierzGen(GeneratorWartosci gen);
 
     void odbierzKomende(qint32 akcja);
+    void odbierzPing(qint64 ping);
+    void odbierzInterwal(int interwal);
 private:
     Ui::MainWindow *ui;
 

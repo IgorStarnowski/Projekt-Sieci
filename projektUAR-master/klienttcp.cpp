@@ -2,12 +2,18 @@
 #include <iostream>
 #include <QByteArray>
 #include <QDateTime>
+#include <QTimer>
 #include "UAR.h"
 
 klientTCP::klientTCP(QObject *parent) : QObject(parent)
 {
     connect(&m_socket, SIGNAL(connected()), this, SLOT(onConnect()));
     connect(&m_socket, SIGNAL(disconnected()), this, SLOT(onDisc()));
+    timerPing = new QTimer(this);
+        connect(timerPing, &QTimer::timeout, this, [this](){
+            wyslijPing();
+        });
+        timerPing->start(1000);
 }
 void klientTCP::conToServ(const QString& ip, int port){
     std::cout<<"Laczenie " << ip.toStdString() << ": " << port << std::endl;
@@ -51,6 +57,7 @@ void klientTCP::onReadyRead()
         quint8 pobraneID;
         qint64 czasWyslania;
         in >> pobraneID >> czasWyslania;
+
         TypPakietu typ = static_cast<TypPakietu>(pobraneID);
         switch (typ) {
             case KONF_PID: {
@@ -83,6 +90,31 @@ void klientTCP::onReadyRead()
                 emit otrzymanoProbki(t, u, w);
                 break;
             }
+            case KONF_INTERWAL: {
+                qint32 odebranyInterwal;
+                in >> odebranyInterwal;
+                emit otrzymanoNowyInterwal(odebranyInterwal);
+                break;
+            }
+            case PAKIET_PING: {
+                QByteArray dane;
+                QDataStream out(&dane, QIODevice::WriteOnly);
+                out.setVersion(QDataStream::Qt_6_0);
+                out << (quint32)0;
+                out << (quint8)PAKIET_PONG;
+                out << czasWyslania;
+                out.device()->seek(0);
+                out << (quint32)dane.size();
+                m_socket.write(dane);
+                m_socket.flush();
+                break;
+                }
+            case PAKIET_PONG: {
+                qint64 obecnyCzas = QDateTime::currentMSecsSinceEpoch();
+                qint64 rtt = obecnyCzas - czasWyslania;
+                emit nowyPing(rtt / 2);
+                break;
+                }
             default:
                 qDebug() << "[KLIENT] Odrzucono nieznany pakiet o ID:" << pobraneID;
                 break;
@@ -101,5 +133,28 @@ QString klientTCP::pobierzIP() {
     if (ip == "::1") return "127.0.0.1";
     return ip;
 }
-
-
+void klientTCP::sendInterwal(int interwalMs) {
+    if(m_socket.state() != QAbstractSocket::ConnectedState) return;
+    QByteArray dane;
+    QDataStream out(&dane, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_6_0);
+    out << (quint32)0;
+    out << (quint8)KONF_INTERWAL;
+    out << QDateTime::currentMSecsSinceEpoch();
+    out << (qint32)interwalMs;
+    out.device()->seek(0);
+    out << (quint32)dane.size();
+    m_socket.write(dane);
+    m_socket.waitForBytesWritten();
+}
+void klientTCP::wyslijPing() {
+    if(m_socket.state() != QAbstractSocket::ConnectedState) return;
+    QByteArray dane;
+    QDataStream out(&dane, QIODevice::WriteOnly);
+    out << (quint32)0;
+    out << (quint8)PAKIET_PING;
+    out << QDateTime::currentMSecsSinceEpoch();
+    out.device()->seek(0);
+    out << (quint32)dane.size();
+    m_socket.write(dane);
+}

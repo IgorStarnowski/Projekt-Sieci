@@ -13,8 +13,11 @@ enum TypPakietu : quint8{
     KONF_PID = 1,
     KONF_ARX = 2,
     KONF_GEN = 3,
+    KONF_INTERWAL = 10,
     PROBKI_SYGNAL = 16,
-    SYM_KONTROLKI = 32
+    SYM_KONTROLKI = 32,
+    PAKIET_PING = 99,
+    PAKIET_PONG = 100
 };
 
 enum LiczCalk {Wew = 0, Zew = 1}; // Wew: Stala w sumie, Zew: Stala przed suma

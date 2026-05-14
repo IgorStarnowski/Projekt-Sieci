@@ -543,7 +543,14 @@ void MainWindow::setupAutoSendConnections() {
 
     connect(ui->spinFill, &QDoubleSpinBox::editingFinished,
             this, &MainWindow::sendGenConfig);
-
+    connect(ui->spinInterval, &QSpinBox::editingFinished, this, [this](){
+            int nowaWartosc = ui->spinInterval->value();
+            if (klient != nullptr) {
+                klient->sendInterwal(nowaWartosc);
+            } else if (serwer != nullptr) {
+                serwer->sendInterwal(nowaWartosc);
+            }
+        });
 }
 void MainWindow::sendGenConfig() {
     if (serwer == nullptr) return;
@@ -623,10 +630,14 @@ void MainWindow::on_btnSiec_clicked()
             connect(klient, &klientTCP::otrzymanoNowyGen, this, &MainWindow::odbierzGen);
             connect(klient, &klientTCP::otrzymanoKomende, this, &MainWindow::odbierzKomende);
             connect(klient, &klientTCP::otrzymanoNowyARX, this, &MainWindow::odbierzARX);
+            connect(klient, &klientTCP::nowyPing, this, &MainWindow::odbierzPing);
+            connect(klient, &klientTCP::otrzymanoNowyInterwal, this, &MainWindow::odbierzInterwal);
             klient->conToServ(ip,port);
         } else {
             serwer = new SerwerTCP(this);
             connect(serwer, &SerwerTCP::otrzymanoNowyARX, this, &MainWindow::odbierzARX);
+            connect(serwer, &SerwerTCP::nowyPing, this, &MainWindow::odbierzPing);
+            connect(serwer, &SerwerTCP::otrzymanoNowyInterwal, this, &MainWindow::odbierzInterwal);
             serwer->startListening(port);
             ui->statusLabel->setText("STATUS: NASŁUCHIWANIE NA PORCIE " + QString::number(port));
             ui->statusLabel->setStyleSheet("background-color: #007bff; color: white;");
@@ -783,4 +794,32 @@ void MainWindow::odbierzKomende(qint32 akcja) {
         wykonajResetLokalnie();
         ui->StatusBar->showMessage("Otrzymano komendę: RESET", 3000);
     }
+}
+void MainWindow::odbierzPing(qint64 ping) {
+    ui->labelPing->setText(QString("Ping: %1 ms").arg(ping));
+    int interwal = ui->spinInterval->value();
+    if (ping > interwal) {
+        ui->labelPing->setStyleSheet("color: white; background-color: red; font-weight: bold; padding: 2px;");
+        if (!ui->btnStart->isEnabled()) {
+            if (klient != nullptr) klient->rozlacz();
+            if (serwer != nullptr) serwer->zatrzymaj();
+            QMessageBox::warning(this, "Awaryjne Przejście w Tryb Lokalny",
+                                  "Opóźnienie sieci (" + QString::number(ping) + " ms) "
+                                  "jest większe niż interwał symulacji (" + QString::number(interwal) + " ms)!\n\n"
+                                  "Połączenie sieciowe zostało zerwane, aby zapobiec desynchronizacji. "
+                                  "Symulacja NIE została zatrzymana i jest kontynuowana na "
+                                  "ostatnich odebranych parametrach (Tryb Lokalny).");
+        }
+    } else if (ping > interwal * 0.7) {
+        ui->labelPing->setStyleSheet("color: black; background-color: yellow; font-weight: bold; padding: 2px;");
+    } else {
+        ui->labelPing->setStyleSheet("color: white; background-color: green; font-weight: bold; padding: 2px;");
+    }
+}
+
+void MainWindow::odbierzInterwal(int interwal) {
+    const QSignalBlocker blocker(ui->spinInterval);
+    ui->spinInterval->setValue(interwal);
+    updateParameters();
+    ui->StatusBar->showMessage("Zsynchronizowano interwał z sieci: " + QString::number(interwal) + " ms", 3000);
 }
