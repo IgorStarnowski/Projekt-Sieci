@@ -107,3 +107,20 @@ QString SerwerTCP::pobierzIP() {
     if (ip == "::1") return "127.0.0.1";
     return ip;
 }
+
+void SerwerTCP::sendKomenda(qint32 akcja) {
+    if(!m_clientSocket || m_clientSocket->state() != QAbstractSocket::ConnectedState) return;
+
+    QByteArray dane;
+    QDataStream out(&dane, QIODevice::WriteOnly);
+    out << (quint32)0;
+    out << (quint8)SYM_KONTROLKI;
+    out << QDateTime::currentMSecsSinceEpoch();
+    out << akcja;
+
+    out.device()->seek(0);
+    out << (quint32)dane.size();
+
+    m_clientSocket->write(dane);
+    m_clientSocket->waitForBytesWritten();
+}

@@ -56,6 +56,7 @@ private slots:
     void odbierzARX(ModelARX arx);
     void odbierzGen(GeneratorWartosci gen);
 
+    void odbierzKomende(qint32 akcja);
 private:
     Ui::MainWindow *ui;
 
@@ -119,6 +120,7 @@ private:
     void setupConnections();       // Podpięcie sygnałów
     void pushARXParamsToService(); // Wysłanie parametrów ARX do backendu
     void zarzadzajKontrolkami(bool polaczono, bool toKlient);
+    void wykonajResetLokalnie();
 };
 
 #endif // MAINWINDOW_H

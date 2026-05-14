@@ -18,6 +18,7 @@ public:
     void sendConf(TypPakietu pakietID, const RegulatorPID &pid);
     void sendConf(TypPakietu pakietID, const GeneratorWartosci &gen);
     QString pobierzIP();
+    void sendKomenda(qint32 akcja);
 private slots:
     void onNewCon();
     void onRedyRead();

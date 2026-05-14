@@ -220,18 +220,22 @@ void MainWindow::startSimulation() {
 
     // Zlecenie startu dla UARService
     m_service->startSimulation(interval);
+    if (serwer) serwer->sendKomenda(1);
 }
 
 void MainWindow::stopSimulation() {
     // Zlecenie stopu dla UARService
     m_service->stopSimulation();
+    if (serwer) serwer->sendKomenda(2);
 }
 
 void MainWindow::resetSimulation() {
-    // Reset w UARService
-    m_service->resetSimulation();
+    wykonajResetLokalnie();
+    if (serwer) serwer->sendKomenda(3);
+}
 
-    // Czyszczenie wykresów
+void MainWindow::wykonajResetLokalnie() {
+    m_service->resetSimulation();
     m_graphY_regulowana->data()->clear();
     m_graphY_zadana->data()->clear();
     m_graphError->data()->clear();
@@ -239,13 +243,10 @@ void MainWindow::resetSimulation() {
     m_graphU_P->data()->clear();
     m_graphU_I->data()->clear();
     m_graphU_D->data()->clear();
-
-    // Replot
     m_plotY->replot();
     m_plotError->replot();
     m_plotU->replot();
     m_plotUComp->replot();
-
     aktualnyCzas = 0.0;
 }
 
@@ -614,6 +615,7 @@ void MainWindow::on_btnSiec_clicked()
             });
             connect(klient, &klientTCP::otrzymanoNowyPID, this, &MainWindow::odbierzPID);
             connect(klient, &klientTCP::otrzymanoNowyGen, this, &MainWindow::odbierzGen);
+            connect(klient, &klientTCP::otrzymanoKomende, this, &MainWindow::odbierzKomende);
             klient->conToServ(ip,port);
         } else {
             serwer = new SerwerTCP(this);
@@ -757,4 +759,21 @@ void MainWindow::updateGenUI() {
 
     const QSignalBlocker blockerWyp(ui->spinFill);
     ui->spinFill->setValue(m_genWypelnienie);
+}
+
+void MainWindow::odbierzKomende(qint32 akcja) {
+    if (akcja == 1) {
+        int interval = ui->spinInterval->value();
+        updateParameters();
+        m_service->startSimulation(interval);
+        ui->StatusBar->showMessage("Otrzymano komendę: START", 3000);
+    }
+    else if (akcja == 2) {
+        m_service->stopSimulation();
+        ui->StatusBar->showMessage("Otrzymano komendę: STOP", 3000);
+    }
+    else if (akcja == 3) {
+        wykonajResetLokalnie();
+        ui->StatusBar->showMessage("Otrzymano komendę: RESET", 3000);
+    }
 }
