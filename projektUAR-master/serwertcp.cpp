@@ -174,6 +174,7 @@ void SerwerTCP::sendConf(TypPakietu id, const ModelARX &arx) {
     out << (quint32)dane.size();
     m_clientSocket->write(dane);
 }
+
 void SerwerTCP::sendInterwal(int interwalMs) {
     if(!m_clientSocket || m_clientSocket->state() != QAbstractSocket::ConnectedState) return;
     QByteArray dane;
