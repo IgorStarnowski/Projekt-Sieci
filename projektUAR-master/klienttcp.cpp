@@ -65,6 +65,12 @@ void klientTCP::onReadyRead()
                 emit otrzymanoNowyGen(odebranyGen);
                 break;
             }
+            case KONF_ARX: {
+                ModelARX odebranyARX;
+                in >> odebranyARX;
+                emit otrzymanoNowyARX(odebranyARX);
+                break;
+            }
             case SYM_KONTROLKI: {
                 qint32 akcja;
                 in >> akcja;

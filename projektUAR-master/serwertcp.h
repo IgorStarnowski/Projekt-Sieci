@@ -17,6 +17,7 @@ public:
     void zatrzymaj();
     void sendConf(TypPakietu pakietID, const RegulatorPID &pid);
     void sendConf(TypPakietu pakietID, const GeneratorWartosci &gen);
+    void sendConf(TypPakietu id, const ModelARX &arx); //
     QString pobierzIP();
     void sendKomenda(qint32 akcja);
 private slots:

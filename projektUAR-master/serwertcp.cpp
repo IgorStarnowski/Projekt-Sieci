@@ -124,3 +124,20 @@ void SerwerTCP::sendKomenda(qint32 akcja) {
     m_clientSocket->write(dane);
     m_clientSocket->waitForBytesWritten();
 }
+
+void SerwerTCP::sendConf(TypPakietu id, const ModelARX &arx) {
+    if(!m_clientSocket || m_clientSocket->state() != QAbstractSocket::ConnectedState) return;
+
+    QByteArray dane;
+    QDataStream out(&dane, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_6_0);
+
+    out << (quint32)0;
+    out << (quint8)id;
+    out << QDateTime::currentMSecsSinceEpoch();
+    out << arx;
+
+    out.device()->seek(0);
+    out << (quint32)dane.size();
+    m_clientSocket->write(dane);
+}

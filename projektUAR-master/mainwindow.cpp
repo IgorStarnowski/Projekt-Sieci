@@ -429,6 +429,13 @@ void MainWindow::loadConfig() {
 
     // Wymuszenie aktualizacji
     updateParameters();
+    // AUTOMATYCZNE WYSŁANIE DO SIECI PO WCZYTANIU:
+    if (serwer != nullptr || klient != nullptr) {
+        sendPIDConfig();  // Wyśle KONF_PID
+        sendGenConfig();  // Wyśle KONF_GEN
+        sendARXConfig();  // Wyśle KONF_ARX
+        ui->StatusBar->showMessage("Wczytano konfigurację i rozesłano do sieci", 3000);
+    }
 
 }
 void MainWindow::zarzadzajKontrolkami(bool polaczono, bool toKlient) {
@@ -573,24 +580,23 @@ void MainWindow::sendPIDConfig() {
 }
 
 void MainWindow::sendARXConfig() {
-    if (klient == nullptr) return;
-
     ModelARX pakietARX;
-
     auto toVec = [](const QString& s) {
         std::vector<double> v;
         QStringList list = s.split(',', Qt::SkipEmptyParts);
-        for(const QString& item : list) {
-            v.push_back(item.trimmed().toDouble());
-        }
+        for(const QString& item : list) v.push_back(item.trimmed().toDouble());
         return v;
     };
+
     pakietARX.setParams(toVec(m_curA), toVec(m_curB), m_curK);
     pakietARX.setLimity(m_curMinU, m_curMaxU, m_curMinY, m_curMaxY, m_curLimitsOn);
     pakietARX.setSzum(m_curNoise);
 
-    klient->sendConf(KONF_ARX, pakietARX);
-    ui->StatusBar->showMessage("Wysłano parametry obiektu ARX [Auto]", 2000);
+    if (klient != nullptr) {
+        klient->sendConf(KONF_ARX, pakietARX);
+    } else if (serwer != nullptr) {
+        serwer->sendConf(KONF_ARX, pakietARX);
+    }
 }
 
 void MainWindow::on_btnSiec_clicked()
@@ -616,6 +622,7 @@ void MainWindow::on_btnSiec_clicked()
             connect(klient, &klientTCP::otrzymanoNowyPID, this, &MainWindow::odbierzPID);
             connect(klient, &klientTCP::otrzymanoNowyGen, this, &MainWindow::odbierzGen);
             connect(klient, &klientTCP::otrzymanoKomende, this, &MainWindow::odbierzKomende);
+            connect(klient, &klientTCP::otrzymanoNowyARX, this, &MainWindow::odbierzARX);
             klient->conToServ(ip,port);
         } else {
             serwer = new SerwerTCP(this);

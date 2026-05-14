@@ -30,6 +30,7 @@ signals:
     void otrzymanoNowyGen(const GeneratorWartosci &gen);
     void otrzymanoProbki(double t, double u, double w);
     void otrzymanoKomende(int akcja);
+    void otrzymanoNowyARX(ModelARX arx);
 };
 
 #endif // KLIENTTCP_H
