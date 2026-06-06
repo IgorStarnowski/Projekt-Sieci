@@ -123,6 +123,9 @@ private:
     void pushARXParamsToService(); // Wysłanie parametrów ARX do backendu
     void zarzadzajKontrolkami(bool polaczono, bool toKlient);
     void wykonajResetLokalnie();
+
+    int m_licznikWysokiegoPingu = 0;
+    const int MAKS_ZLYCH_PINGOW = 5;
 };
 
 #endif // MAINWINDOW_H

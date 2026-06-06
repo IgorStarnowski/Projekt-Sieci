@@ -516,6 +516,10 @@ void MainWindow::zarzadzajKontrolkami(bool polaczono, bool toKlient) {
         ui->btnSave->setEnabled(true);
         ui->btnLoad->setEnabled(true);
     }
+
+    if (polaczono) {
+        m_licznikWysokiegoPingu = 0; // Reset licznika przy każdym nowym połączeniu
+    }
 }
 void MainWindow::setupAutoSendConnections() {
 
@@ -798,22 +802,37 @@ void MainWindow::odbierzKomende(qint32 akcja) {
 void MainWindow::odbierzPing(qint64 ping) {
     ui->labelPing->setText(QString("Ping: %1 ms").arg(ping));
     int interwal = ui->spinInterval->value();
+
     if (ping > interwal) {
+        m_licznikWysokiegoPingu++;
         ui->labelPing->setStyleSheet("color: white; background-color: red; font-weight: bold; padding: 2px;");
-        if (!ui->btnStart->isEnabled()) {
-            if (klient != nullptr) klient->rozlacz();
-            if (serwer != nullptr) serwer->zatrzymaj();
-            QMessageBox::warning(this, "Awaryjne Przejście w Tryb Lokalny",
-                                  "Opóźnienie sieci (" + QString::number(ping) + " ms) "
-                                  "jest większe niż interwał symulacji (" + QString::number(interwal) + " ms)!\n\n"
-                                  "Połączenie sieciowe zostało zerwane, aby zapobiec desynchronizacji. "
-                                  "Symulacja NIE została zatrzymana i jest kontynuowana na "
-                                  "ostatnich odebranych parametrach (Tryb Lokalny).");
+        ui->StatusBar->showMessage(QString("Wysoki ping! Próba: %1/%2").arg(m_licznikWysokiegoPingu).arg(MAKS_ZLYCH_PINGOW), 2000);
+
+        // Rozłączenie następuje dopiero po 5 nieudanych próbach
+        if (m_licznikWysokiegoPingu >= MAKS_ZLYCH_PINGOW) {
+            if (!ui->btnStart->isEnabled()) { // Wykonywane tylko po stronie klienta
+                if (klient != nullptr) klient->rozlacz();
+                if (serwer != nullptr) serwer->zatrzymaj();
+
+                QMessageBox::warning(this, "Awaryjne Przejście w Tryb Lokalny",
+                                     "Opóźnienie sieci (" + QString::number(ping) + " ms) "
+                                                                                    "było większe niż interwał symulacji (" + QString::number(interwal) + " ms) "
+                                                                       "przez " + QString::number(MAKS_ZLYCH_PINGOW) + " kolejnych odczytów!\n\n"
+                                                                                "Połączenie sieciowe zostało zerwane, aby zapobiec całkowitej desynchronizacji. "
+                                                                                "Symulacja NIE została zatrzymana i jest kontynuowana na "
+                                                                                "ostatnich odebranych parametrach (Tryb Lokalny).");
+            }
+            m_licznikWysokiegoPingu = 0; // Reset po rozłączeniu
         }
-    } else if (ping > interwal * 0.7) {
-        ui->labelPing->setStyleSheet("color: black; background-color: yellow; font-weight: bold; padding: 2px;");
     } else {
-        ui->labelPing->setStyleSheet("color: white; background-color: green; font-weight: bold; padding: 2px;");
+        // Ping w normie, zerujemy licznik i aplikacja naturalnie synchronizuje odebrane w tle pakiety
+        m_licznikWysokiegoPingu = 0;
+
+        if (ping > interwal * 0.7) {
+            ui->labelPing->setStyleSheet("color: black; background-color: yellow; font-weight: bold; padding: 2px;");
+        } else {
+            ui->labelPing->setStyleSheet("color: white; background-color: green; font-weight: bold; padding: 2px;");
+        }
     }
 }
 
